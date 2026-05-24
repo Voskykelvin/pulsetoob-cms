@@ -26,9 +26,14 @@ const sslOptions = {
 };
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
+const hasValidDatabaseUrl = databaseUrl && /^(postgres|postgresql):\/\//.test(databaseUrl);
 
 const requiredFallbackVars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST'];
 const missingFallbackVars = requiredFallbackVars.filter((key) => !process.env[key]);
+
+if (databaseUrl && !hasValidDatabaseUrl) {
+  throw new Error('DATABASE_URL must start with postgres:// or postgresql://.');
+}
 
 if (!databaseUrl && missingFallbackVars.length > 0) {
   throw new Error(
@@ -36,7 +41,7 @@ if (!databaseUrl && missingFallbackVars.length > 0) {
   );
 }
 
-const sequelize = databaseUrl
+const sequelize = hasValidDatabaseUrl
   ? new Sequelize(databaseUrl, {
       ...commonOptions,
       ...sslOptions,
