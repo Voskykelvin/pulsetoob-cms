@@ -25,8 +25,19 @@ const sslOptions = {
   },
 };
 
-const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, {
+const databaseUrl = process.env.DATABASE_URL?.trim();
+
+const requiredFallbackVars = ['DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_HOST'];
+const missingFallbackVars = requiredFallbackVars.filter((key) => !process.env[key]);
+
+if (!databaseUrl && missingFallbackVars.length > 0) {
+  throw new Error(
+    `Database configuration missing. Set DATABASE_URL or provide ${missingFallbackVars.join(', ')}.`
+  );
+}
+
+const sequelize = databaseUrl
+  ? new Sequelize(databaseUrl, {
       ...commonOptions,
       ...sslOptions,
     })
