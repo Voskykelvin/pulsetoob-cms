@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const backlinkController = require('../controllers/backlinkController');
+const { authenticate, authorize } = require('../middleware/auth');
+router.get('/', authenticate, backlinkController.getAll.bind(backlinkController));
+router.get('/stats', authenticate, backlinkController.getStats.bind(backlinkController));
+router.post('/', authenticate, backlinkController.create.bind(backlinkController));
+router.put('/:id', authenticate, backlinkController.update.bind(backlinkController));
+router.delete('/:id', authenticate, backlinkController.delete.bind(backlinkController));
+router.post('/check-health', authenticate, authorize('admin','editor','super_admin'), backlinkController.checkHealth.bind(backlinkController));
+module.exports = router;

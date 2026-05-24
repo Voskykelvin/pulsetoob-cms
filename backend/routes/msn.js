@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+const msnController = require('../controllers/msnController');
+const { authenticate, authorize } = require('../middleware/auth');
+router.get('/articles', authenticate, msnController.getEligibleArticles.bind(msnController));
+router.get('/stats', authenticate, msnController.getStats.bind(msnController));
+router.get('/feed-preview', authenticate, msnController.getFeedPreview.bind(msnController));
+router.post('/toggle/:id', authenticate, authorize('admin','editor','super_admin'), msnController.toggleEligibility.bind(msnController));
+router.post('/bulk-enable', authenticate, authorize('admin','super_admin'), msnController.bulkEnable.bind(msnController));
+module.exports = router;

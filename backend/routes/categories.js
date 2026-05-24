@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const categoryController = require('../controllers/categoryController');
+const { authenticate, authorize } = require('../middleware/auth');
+router.get('/', categoryController.getAllCategories.bind(categoryController));
+router.get('/stats', categoryController.getCategoryStats.bind(categoryController));
+router.get('/:slug', categoryController.getCategoryBySlug.bind(categoryController));
+router.post('/', authenticate, authorize('admin','editor','super_admin'), categoryController.createCategory.bind(categoryController));
+router.put('/:id', authenticate, authorize('admin','editor','super_admin'), categoryController.updateCategory.bind(categoryController));
+router.delete('/:id', authenticate, authorize('admin','super_admin'), categoryController.deleteCategory.bind(categoryController));
+router.post('/reorder', authenticate, authorize('admin','super_admin'), categoryController.reorderCategories.bind(categoryController));
+router.post('/bulk', authenticate, authorize('admin','super_admin'), categoryController.bulkUpdateCategories.bind(categoryController));
+module.exports = router;

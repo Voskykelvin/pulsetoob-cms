@@ -1,0 +1,10 @@
+const express = require('express');
+const router = express.Router();
+const seoController = require('../controllers/seoController');
+const { authenticate, authorize } = require('../middleware/auth');
+router.get('/overview', authenticate, seoController.getOverview.bind(seoController));
+router.get('/analyze/:id', authenticate, seoController.analyzeArticle.bind(seoController));
+router.post('/bulk-analyze', authenticate, authorize('admin','editor','super_admin'), seoController.bulkAnalyze.bind(seoController));
+router.get('/schema/:id', authenticate, seoController.getSchemaMarkup.bind(seoController));
+router.post('/suggest-keywords', authenticate, seoController.suggestKeywords.bind(seoController));
+module.exports = router;

@@ -1,0 +1,17 @@
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const mediaController = require('../controllers/mediaController');
+const { authenticate } = require('../middleware/auth');
+const validate = require('../middleware/validate');
+const { mediaListRules, mediaIdRules, updateMediaRules } = require('../validators/mediaValidators');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
+router.get('/', authenticate, mediaListRules, validate, mediaController.getAll.bind(mediaController));
+router.get('/:id', authenticate, mediaIdRules, validate, mediaController.getOne.bind(mediaController));
+router.post('/upload/image', authenticate, upload.single('file'), mediaController.uploadImage.bind(mediaController));
+router.post('/upload/video', authenticate, upload.single('file'), mediaController.uploadVideo.bind(mediaController));
+router.post('/upload/batch', authenticate, upload.array('files', 20), mediaController.batchUpload.bind(mediaController));
+router.put('/:id', authenticate, updateMediaRules, validate, mediaController.update.bind(mediaController));
+router.delete('/:id', authenticate, mediaIdRules, validate, mediaController.delete.bind(mediaController));
+router.post('/bulk-delete', authenticate, mediaController.bulkDelete.bind(mediaController));
+module.exports = router;
