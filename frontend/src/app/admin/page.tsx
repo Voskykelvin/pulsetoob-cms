@@ -11,6 +11,23 @@ interface Stats {
   storage: { usedFormatted: string }
 }
 
+const statusDot = {
+  width: '0.65rem',
+  height: '0.65rem',
+  borderRadius: '999px',
+  background: '#16a34a',
+  border: '1px solid #14532d',
+  flexShrink: 0,
+}
+
+const statusItem = {
+  color: '#374151',
+  fontSize: '0.875rem',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.4rem',
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,16 +82,15 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Quick Actions */}
       <div style={{ marginTop: '2rem', background: 'white', borderRadius: '12px', padding: '1.5rem', border: '1px solid #e5e7eb' }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: '600', color: '#111827', marginBottom: '1rem' }}>Quick Actions</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
           {[
             { label: '+ New Article', href: '/admin/articles/new', color: '#16a34a' },
             { label: '+ New Category', href: '/admin/categories', color: '#2563eb' },
-            { label: '📤 Upload Media', href: '/admin/media', color: '#d97706' },
-            { label: '🔍 SEO Analysis', href: '/admin/seo', color: '#7c3aed' },
-            { label: '📊 View Analytics', href: '/admin/analytics', color: '#0891b2' },
+            { label: 'Upload Media', href: '/admin/media', color: '#d97706' },
+            { label: 'SEO Analysis', href: '/admin/seo', color: '#7c3aed' },
+            { label: 'View Analytics', href: '/admin/analytics', color: '#0891b2' },
           ].map((action) => (
             <a
               key={action.label}
@@ -87,13 +103,21 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* API Status */}
       <div style={{ marginTop: '1.5rem', background: '#f0fdf4', borderRadius: '12px', padding: '1.25rem', border: '1px solid #bbf7d0' }}>
-        <h3 style={{ color: '#16a34a', fontWeight: '600', marginBottom: '0.5rem' }}>✅ System Status</h3>
+        <h3 style={{ color: '#16a34a', fontWeight: '600', marginBottom: '0.5rem' }}>System Status</h3>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <span style={{ color: '#374151', fontSize: '0.875rem' }}>🟢 Backend API: localhost:5000</span>
-          <span style={{ color: '#374151', fontSize: '0.875rem' }}>🟢 Database: PostgreSQL Connected</span>
-          <span style={{ color: '#374151', fontSize: '0.875rem' }}>🟢 Frontend: localhost:3000</span>
+          <span style={statusItem}>
+            <span style={statusDot} />
+            Backend API: localhost:5000
+          </span>
+          <span style={statusItem}>
+            <span style={statusDot} />
+            Database: PostgreSQL Connected
+          </span>
+          <span style={statusItem}>
+            <span style={statusDot} />
+            Frontend: localhost:3000
+          </span>
         </div>
       </div>
     </div>

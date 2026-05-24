@@ -314,7 +314,7 @@ export default function EditArticlePage() {
           
           <div className="flex items-center gap-3 text-sm text-gray-500 my-5 pb-5 border-b border-gray-150 font-sans">
             <span className="font-semibold text-gray-800">PulseToob Editorial</span>
-            <span>•</span>
+            <span>-</span>
             <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
           </div>
 
@@ -420,7 +420,7 @@ export default function EditArticlePage() {
                 <div className="mt-3 font-sans max-w-[600px]">
                   <div className="text-[14px] text-gray-600 truncate">{slugifiedUrl}</div>
                   <div className="text-[#1a0dab] text-xl hover:underline cursor-pointer line-clamp-1 mt-1 font-medium">
-                    {form.metaTitle || form.title || 'Untitled Article — PulseToob'}
+                    {form.metaTitle || form.title || 'Untitled Article - PulseToob'}
                   </div>
                   <div className="text-[#4d5156] text-sm line-clamp-2 mt-1 leading-snug">
                     {form.metaDescription || form.excerpt || 'Write a meta description or summary to preview how this post will represent itself on Search Results pages.'}

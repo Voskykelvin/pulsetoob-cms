@@ -232,7 +232,7 @@ function MenuBar({ editor }: { editor: any }) {
         className={btnStyle(editor.isActive('blockquote'))}
         title="Blockquote"
       >
-        <span className="font-serif font-bold text-lg">“</span>
+        <span className="font-serif font-bold text-lg">Quote</span>
       </button>
       <button
         type="button"
@@ -248,7 +248,7 @@ function MenuBar({ editor }: { editor: any }) {
         className={btnStyle(false)}
         title="Horizontal Rule"
       >
-        <span className="text-base">—</span>
+        <span className="text-base">-</span>
       </button>
 
       <div className="w-[1px] h-6 bg-gray-200 mx-1" />
@@ -266,7 +266,7 @@ function MenuBar({ editor }: { editor: any }) {
             autoFocus
           />
           <button type="button" onClick={addLink} className="px-2 py-0.5 text-xs bg-green-600 text-white rounded">Add</button>
-          <button type="button" onClick={() => setShowLinkInput(false)} className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-600">×</button>
+          <button type="button" onClick={() => setShowLinkInput(false)} className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-600">x</button>
         </div>
       ) : (
         <button

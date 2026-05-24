@@ -34,7 +34,6 @@ export default function RSSPage() {
         <p className="text-sm text-gray-500 mt-1">Syndicate categories or your global content stream directly to news publishers.</p>
       </div>
 
-      {/* Core Feeds */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {feeds.map((feed, i) => (
           <div key={i} className="bg-white p-5 border border-gray-200 rounded-xl shadow-sm flex flex-col justify-between">
@@ -65,7 +64,6 @@ export default function RSSPage() {
         ))}
       </div>
 
-      {/* Category Feeds */}
       {categories.length > 0 && (
         <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
           <h3 className="text-base font-bold text-gray-900 border-b pb-3 mb-4">Category Specific Feeds</h3>
@@ -103,9 +101,8 @@ export default function RSSPage() {
         </div>
       )}
 
-      {/* Information Card */}
       <div className="bg-green-50 border border-green-200 p-5 rounded-xl">
-        <h3 className="text-sm font-bold text-green-800 mb-2">💡 Syndication Best Practices</h3>
+        <h3 className="text-sm font-bold text-green-800 mb-2">Syndication Best Practices</h3>
         <ul className="list-disc list-inside text-sm text-green-800 space-y-1.5 pl-2">
           <li>Submit your main feed to aggregators like Google News Producer or Bing Publisher Center.</li>
           <li>Use segment-specific category feeds for targeted partner distributions.</li>

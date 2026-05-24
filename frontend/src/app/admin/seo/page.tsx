@@ -16,29 +16,29 @@ export default function SEOPage() {
   }, [router])
 
   const fetchOverview = async () => {
-    try { 
+    try {
       setLoading(true)
       const res = await api.get('/seo/overview')
-      if (res.data.success) setOverview(res.data.data) 
+      if (res.data.success) setOverview(res.data.data)
     } catch (err) {
       console.error(err)
-    } finally { 
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     }
   }
 
   const runBulkAnalysis = async () => {
     setAnalyzing(true)
-    try { 
+    try {
       const res = await api.post('/seo/bulk-analyze')
-      if (res.data.success) { 
-        alert('Bulk analysis finished!') 
-        fetchOverview() 
-      } 
-    } catch (err) { 
-      alert('Analysis failed') 
-    } finally { 
-      setAnalyzing(false) 
+      if (res.data.success) {
+        alert('Bulk analysis finished!')
+        fetchOverview()
+      }
+    } catch (err) {
+      alert('Analysis failed')
+    } finally {
+      setAnalyzing(false)
     }
   }
 
@@ -57,7 +57,7 @@ export default function SEOPage() {
           disabled={analyzing}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors"
         >
-          {analyzing ? 'Analyzing Articles...' : '🔍 Run Bulk Analysis'}
+          {analyzing ? 'Analyzing Articles...' : 'Run Bulk Analysis'}
         </button>
       </div>
 
@@ -73,7 +73,6 @@ export default function SEOPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Distribution report */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white p-5 border border-gray-200 rounded-xl shadow-sm text-center">
               <p className="text-xs text-gray-400 font-bold uppercase">Average Score</p>
@@ -95,10 +94,9 @@ export default function SEOPage() {
             </div>
           </div>
 
-          {/* Recommendations */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-sm font-bold text-gray-900 border-b pb-3 mb-4">🚨 Needs Attention</h3>
+              <h3 className="text-sm font-bold text-gray-900 border-b pb-3 mb-4">Needs Attention</h3>
               {overview.needsImprovement?.length > 0 ? (
                 <div className="space-y-3">
                   {overview.needsImprovement.map((article: any) => (
@@ -114,7 +112,7 @@ export default function SEOPage() {
             </div>
 
             <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
-              <h3 className="text-sm font-bold text-gray-900 border-b pb-3 mb-4">⭐ Top SEO Performers</h3>
+              <h3 className="text-sm font-bold text-gray-900 border-b pb-3 mb-4">Top SEO Performers</h3>
               {overview.topPerformers?.length > 0 ? (
                 <div className="space-y-3">
                   {overview.topPerformers.map((article: any) => (

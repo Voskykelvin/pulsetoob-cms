@@ -59,7 +59,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="••••••••"
+              placeholder="Password"
               style={{ width: '100%', padding: '0.75rem', border: '1px solid #d1fae5', borderRadius: '8px', fontSize: '1rem', boxSizing: 'border-box', outline: 'none' }}
             />
           </div>

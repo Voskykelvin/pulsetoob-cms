@@ -22,8 +22,8 @@ export default function AnalyticsPage() {
       if (res.data.success) setData(res.data.data)
     } catch (err) {
       console.error(err)
-    } finally { 
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -63,13 +63,12 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Overview Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: '👁️ Total Views', value: data.overview?.totalViews?.toLocaleString() || 0 },
-              { label: '👥 Unique Visitors', value: data.overview?.uniqueVisitors?.toLocaleString() || 0 },
-              { label: '⏱️ Avg Duration', value: `${data.overview?.avgDuration || 0}s` },
-              { label: '📉 Bounce Rate', value: `${data.overview?.bounceRate || 0}%` },
+              { label: 'Total Views', value: data.overview?.totalViews?.toLocaleString() || 0 },
+              { label: 'Unique Visitors', value: data.overview?.uniqueVisitors?.toLocaleString() || 0 },
+              { label: 'Avg Duration', value: `${data.overview?.avgDuration || 0}s` },
+              { label: 'Bounce Rate', value: `${data.overview?.bounceRate || 0}%` },
             ].map((card, i) => (
               <div key={i} className="bg-white p-5 border border-gray-200 rounded-xl shadow-sm">
                 <p className="text-xs text-gray-400 font-semibold uppercase">{card.label}</p>
@@ -78,7 +77,6 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {/* Reports */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
               <h3 className="text-sm font-bold text-gray-900 border-b pb-3">Traffic Sources</h3>
@@ -113,7 +111,6 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          {/* Daily Chart */}
           {data.viewsByDay?.length > 0 && (
             <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
               <h3 className="text-sm font-bold text-gray-900 border-b pb-3 mb-6">Views by Day</h3>

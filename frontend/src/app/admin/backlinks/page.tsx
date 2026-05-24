@@ -20,15 +20,15 @@ export default function BacklinksPage() {
     try {
       setLoading(true)
       const [linksRes, statsRes] = await Promise.all([
-        api.get('/backlinks'), 
+        api.get('/backlinks'),
         api.get('/backlinks/stats')
       ])
       if (linksRes.data.success) setBacklinks(linksRes.data.data)
       if (statsRes.data.success) setStats(statsRes.data.data)
     } catch (err) {
       console.error(err)
-    } finally { 
-      setLoading(false) 
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -36,24 +36,24 @@ export default function BacklinksPage() {
     setChecking(true)
     try {
       const res = await api.post('/backlinks/check-health', {})
-      if (res.data.success) { 
+      if (res.data.success) {
         alert('Checked link health successfully!')
-        fetchData() 
+        fetchData()
       }
-    } catch (err) { 
-      alert('Health check failed') 
-    } finally { 
-      setChecking(false) 
+    } catch (err) {
+      alert('Health check failed')
+    } finally {
+      setChecking(false)
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this backlink?')) return
-    try { 
+    try {
       await api.delete('/backlinks/' + id)
-      fetchData() 
-    } catch (err) { 
-      alert('Delete failed') 
+      fetchData()
+    } catch (err) {
+      alert('Delete failed')
     }
   }
 
@@ -69,7 +69,7 @@ export default function BacklinksPage() {
           disabled={checking}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors shadow-sm"
         >
-          {checking ? 'Checking Links...' : '🔗 Check Link Health'}
+          {checking ? 'Checking Links...' : 'Check Link Health'}
         </button>
       </div>
 
