@@ -11,7 +11,7 @@ class SchedulerService {
 
       for (const article of scheduledArticles) {
         await article.update({ status: 'published', publishedAt: now });
-        console.log(`📝 Published scheduled article: ${article.title}`);
+        console.log(`Published scheduled article: ${article.title}`);
       }
     } catch (error) {
       console.error('Scheduler publish error:', error);
@@ -40,11 +40,11 @@ class SchedulerService {
   }
 
   async generateSitemap() {
-    console.log('🗺️ Sitemap generation triggered');
+    console.log('Sitemap generation triggered');
   }
 
   async cleanupSessions() {
-    console.log('🧹 Session cleanup triggered');
+    console.log('Session cleanup triggered');
   }
 }
 

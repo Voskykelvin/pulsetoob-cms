@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getImageUrl } from '@/utils/imageUrl'
+import { getApiBaseUrl } from '@/utils/apiBase'
 import type { AdSlotName, Advertisement, ApiResponse } from '@/types/cms'
 
 declare global {
@@ -16,7 +17,7 @@ interface AdSlotProps {
   adsenseSlot?: string
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API_URL = getApiBaseUrl()
 
 export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps) {
   const [ad, setAd] = useState<Advertisement | null>(null)

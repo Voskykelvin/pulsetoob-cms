@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AdSlot from '@/components/AdSlot'
+import { getApiBaseUrl } from '@/utils/apiBase'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API = getApiBaseUrl()
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
 const ADSENSE_IN_ARTICLE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT

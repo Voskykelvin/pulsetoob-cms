@@ -23,7 +23,7 @@ async function run() {
     }
   })
   
-  console.log(`✅ User ${email} is now active as super_admin!`)
+  console.log(`User ${email} is now active as super_admin!`)
   process.exit(0)
 }
 

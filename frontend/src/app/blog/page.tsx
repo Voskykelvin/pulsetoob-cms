@@ -2,8 +2,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { getApiBaseUrl } from '@/utils/apiBase'
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
+const API = getApiBaseUrl()
 
 const catThemes: Record<string, { text: string; bg: string }> = {
   movies: { text: 'text-purple-700', bg: 'bg-purple-50' },
