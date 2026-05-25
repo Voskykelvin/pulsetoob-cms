@@ -198,11 +198,20 @@ export default function EditArticlePage() {
     }
   }
 
+  const saveFeaturedImageMetadata = async () => {
+    if (!featuredImage?.id) return
+    await api.put(`/media/${featuredImage.id}`, {
+      altText: featuredImage.altText || '',
+      caption: featuredImage.caption || ''
+    })
+  }
+
   const handleSubmit = async (status: 'draft' | 'published') => {
     if (!form.title.trim()) return alert('Title is required')
     if (!form.content.trim()) return alert('Content is required')
     setSaving(true)
     try {
+      await saveFeaturedImageMetadata()
       // Package payload dynamically accessing the isolated image ID at submit time
       const payload = {
         ...form,
@@ -319,12 +328,20 @@ export default function EditArticlePage() {
           </div>
 
           {featuredImage?.url ? (
-            <div className="my-6 rounded-xl overflow-hidden shadow-sm border border-gray-100">
-              <img src={featuredImage.url} alt="Featured" className="w-full h-[380px] object-cover" />
-            </div>
+            <figure className="my-6">
+              <div className="rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                <img src={featuredImage.url} alt={featuredImage.altText || form.title || 'Featured image'} className="w-full h-[380px] object-cover" />
+              </div>
+              {featuredImage.caption && (
+                <figcaption className="mt-2 text-xs text-gray-500 font-sans">
+                  {featuredImage.caption}
+                </figcaption>
+              )}
+            </figure>
           ) : (
             <div className="w-full h-[180px] bg-gray-50 rounded-xl my-6 flex flex-col items-center justify-center text-gray-400 font-sans italic border border-dashed border-gray-200">
-              <span>No Featured Image Assigned</span>
+              <span>Featured image placeholder</span>
+              <span className="mt-1 text-xs not-italic">Upload an image to preview the story artwork.</span>
             </div>
           )}
 
@@ -473,6 +490,35 @@ export default function EditArticlePage() {
                 accept="image/*"
                 className="hidden"
               />
+              {featuredImage?.url ? (
+                <div className="mt-4 space-y-3">
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Alt text
+                    <input
+                      type="text"
+                      value={featuredImage.altText || ''}
+                      onChange={(e) => setFeaturedImage((prev: any) => ({ ...prev, altText: e.target.value }))}
+                      maxLength={300}
+                      placeholder="Describe what is visible in this image."
+                      className="mt-1 w-full p-2.5 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </label>
+                  <label className="block text-xs font-semibold text-gray-700">
+                    Image credit
+                    <textarea
+                      value={featuredImage.caption || ''}
+                      onChange={(e) => setFeaturedImage((prev: any) => ({ ...prev, caption: e.target.value }))}
+                      rows={2}
+                      placeholder="Credit the photographer, agency, or source."
+                      className="mt-1 w-full p-2.5 border border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-green-500"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <p className="mt-3 text-xs text-gray-400">
+                  Image alt text and credit fields will appear after upload.
+                </p>
+              )}
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">

@@ -62,6 +62,11 @@ function getImageUrl(featuredImage: any) {
   return null
 }
 
+function getImageAlt(featuredImage: any, fallback: string) {
+  if (featuredImage && typeof featuredImage === 'object' && featuredImage.altText) return featuredImage.altText
+  return fallback
+}
+
 export default function ArticlePage() {
   const params = useParams()
   const [article, setArticle] = useState<any>(null)
@@ -117,9 +122,16 @@ export default function ArticlePage() {
 
         {/* Hero Banner Image */}
         {getImageUrl(article.featuredImage) && (
-          <div className="w-full h-[300px] sm:h-[450px] relative overflow-hidden bg-gray-200 border-b border-gray-100">
-            <img src={getImageUrl(article.featuredImage) || ''} alt={article.title} className="w-full h-full object-cover" />
-          </div>
+          <figure className="border-b border-gray-100 bg-white">
+            <div className="w-full h-[300px] sm:h-[450px] relative overflow-hidden bg-gray-200">
+              <img src={getImageUrl(article.featuredImage) || ''} alt={getImageAlt(article.featuredImage, article.title)} className="w-full h-full object-cover" />
+            </div>
+            {article.featuredImage?.caption && (
+              <figcaption className="max-w-3xl mx-auto px-4 py-2 text-xs text-gray-500">
+                {article.featuredImage.caption}
+              </figcaption>
+            )}
+          </figure>
         )}
 
         {/* Content Container */}
