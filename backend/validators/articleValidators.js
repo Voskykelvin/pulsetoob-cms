@@ -14,6 +14,12 @@ const optionalString = (field, max) => body(field)
   .isLength({ max })
   .withMessage(`${field} must be ${max} characters or fewer`);
 
+const optionalText = (field) => body(field)
+  .optional({ nullable: true })
+  .isString()
+  .withMessage(`${field} must be text`)
+  .trim();
+
 const optionalBoolean = (field) => body(field)
   .optional()
   .isBoolean()
@@ -44,7 +50,7 @@ const optionalUuidArray = (field) => body(field)
 const articleCreateRules = [
   body('title').isString().trim().isLength({ min: 3, max: 180 }).withMessage('title must be 3 to 180 characters'),
   body('content').optional({ nullable: true }).isString().withMessage('content must be text'),
-  optionalString('excerpt', 320),
+  optionalText('excerpt'),
   optionalString('subtitle', 220),
   optionalUuidArray('categoryIds'),
   optionalStringArray('tagNames'),
@@ -73,7 +79,7 @@ const articleUpdateRules = [
   uuidParam(),
   body('title').optional().isString().trim().isLength({ min: 3, max: 180 }).withMessage('title must be 3 to 180 characters'),
   body('content').optional({ nullable: true }).isString().withMessage('content must be text'),
-  optionalString('excerpt', 320),
+  optionalText('excerpt'),
   optionalString('subtitle', 220),
   optionalUuidArray('categoryIds'),
   optionalStringArray('tagNames'),
@@ -117,7 +123,7 @@ const autoSaveRules = [
   uuidParam(),
   body('title').optional().isString().trim().isLength({ min: 3, max: 180 }).withMessage('title must be 3 to 180 characters'),
   body('content').optional().isString().withMessage('content must be text'),
-  optionalString('excerpt', 320),
+  optionalText('excerpt'),
 ];
 
 const bulkActionRules = [
