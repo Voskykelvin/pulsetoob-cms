@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { getAuthorName } from '@/utils/author'
 
 export default function MSNPage() {
   const router = useRouter()
@@ -103,7 +104,7 @@ export default function MSNPage() {
                   <td className="p-4">
                     <div className="font-semibold text-gray-800 truncate max-w-sm">{article.title}</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      By {article.author?.username || 'PulseToob'} - {new Date(article.publishedAt).toLocaleDateString()}
+                      By {getAuthorName(article.author)} - {new Date(article.publishedAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td className="p-4">

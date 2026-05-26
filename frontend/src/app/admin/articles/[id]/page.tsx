@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import api from '@/lib/api'
 import dynamic from 'next/dynamic'
+import { renderArticleContent } from '@/utils/articleContent'
 
 const RichEditor = dynamic(() => import('@/components/editor/RichEditor'), {
   ssr: false,
@@ -48,6 +49,19 @@ const previewStyles = `
     border-radius: 8px;
     margin: 1.5rem auto;
     display: block;
+  }
+  .ProseMirror-preview figure.content-image {
+    margin: 1.75rem 0;
+  }
+  .ProseMirror-preview figure.content-image img {
+    margin: 0 auto;
+  }
+  .ProseMirror-preview figure.content-image figcaption {
+    margin-top: 0.5rem;
+    color: #6b7280;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.75rem;
+    line-height: 1.4;
   }
   .ProseMirror-preview pre {
     background: #1e1e2e;
@@ -347,7 +361,7 @@ export default function EditArticlePage() {
 
           <div 
             className="ProseMirror-preview max-w-none text-gray-800 leading-relaxed text-base md:text-lg"
-            dangerouslySetInnerHTML={{ __html: form.content || '<p class="text-gray-400 italic">No content written yet...</p>' }}
+            dangerouslySetInnerHTML={{ __html: form.content ? renderArticleContent(form.content) : '<p class="text-gray-400 italic">No content written yet...</p>' }}
           />
         </div>
       ) : (

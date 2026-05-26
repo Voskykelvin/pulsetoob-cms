@@ -3,6 +3,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { getApiBaseUrl } from '@/utils/apiBase'
+import { getAuthorName } from '@/utils/author'
 
 const API = getApiBaseUrl()
 
@@ -139,7 +140,7 @@ function BlogContent() {
                       <p className="text-xs text-gray-500 line-clamp-2">{article.excerpt}</p>
                     </div>
                     <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 border-t border-gray-100 pt-3">
-                      <span>{article.author?.username || 'PulseToob'}</span>
+                      <span>{getAuthorName(article.author)}</span>
                       <span>{article.readTime || 5} min</span>
                     </div>
                   </div>

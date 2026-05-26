@@ -112,8 +112,8 @@ class ArticleController {
 
       if (updates.content) {
         updates.content = sanitizeHtml(updates.content, {
-          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video', 'h1', 'h2', 'h3']),
-          allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['class', 'id', 'style'], img: ['src', 'alt', 'width', 'height'], iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'] },
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video', 'h1', 'h2', 'h3', 'figure', 'figcaption']),
+          allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['class', 'id', 'style'], img: ['src', 'alt', 'title', 'width', 'height'], iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'] },
         });
         updates.contentPlainText = updates.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
         updates.wordCount = updates.contentPlainText.split(/\s+/).filter(w => w.length > 0).length;

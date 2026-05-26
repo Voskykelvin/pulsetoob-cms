@@ -4,6 +4,8 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import AdSlot from '@/components/AdSlot'
 import { getApiBaseUrl } from '@/utils/apiBase'
+import { getAuthorInitials, getAuthorName } from '@/utils/author'
+import { renderArticleContent } from '@/utils/articleContent'
 
 const API = getApiBaseUrl()
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
@@ -39,6 +41,19 @@ const renderStyles = `
     border-radius: 8px;
     margin: 1.5rem auto;
     display: block;
+  }
+  .ProseMirror-rendered figure.content-image {
+    margin: 1.75rem 0;
+  }
+  .ProseMirror-rendered figure.content-image img {
+    margin: 0 auto;
+  }
+  .ProseMirror-rendered figure.content-image figcaption {
+    margin-top: 0.5rem;
+    color: #6b7280;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.75rem;
+    line-height: 1.4;
   }
   .ProseMirror-rendered pre {
     background: #1e1e2e;
@@ -160,11 +175,11 @@ export default function ArticlePage() {
           {/* Author */}
           <div className="flex items-center gap-3 border-b border-gray-200 pb-8 mb-8 text-sm text-gray-500">
             <div className="w-10 h-10 rounded-full bg-green-50 text-green-700 border border-green-100 flex items-center justify-center font-bold">
-              {article.author?.username?.slice(0, 2).toUpperCase() || 'PT'}
+              {getAuthorInitials(article.author)}
             </div>
             <div>
               <span className="block font-bold text-gray-900 hover:underline cursor-pointer">
-                {article.author?.firstName || article.author?.username || 'PulseToob Staff'}
+                {getAuthorName(article.author, 'PulseToob Staff')}
               </span>
               <span className="block text-xs mt-0.5">
                 {article.publishedAt && new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -177,7 +192,7 @@ export default function ArticlePage() {
 
           <article 
             className="ProseMirror-rendered max-w-none text-gray-900 leading-relaxed text-base md:text-lg space-y-6"
-            dangerouslySetInnerHTML={{ __html: article.content }}
+            dangerouslySetInnerHTML={{ __html: renderArticleContent(article.content) }}
           />
 
           {article.tags?.length > 0 && (

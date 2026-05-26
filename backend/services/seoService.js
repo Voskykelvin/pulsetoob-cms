@@ -1,4 +1,5 @@
 const cheerio = require('cheerio');
+const { getAuthorName } = require('../utils/authorName');
 
 class SEOService {
   analyzeArticle(article) {
@@ -247,7 +248,7 @@ class SEOService {
       description: article.metaDescription || article.excerpt,
       datePublished: article.publishedAt,
       dateModified: article.updatedAt,
-      author: { '@type': 'Person', name: author?.username || 'PulseToob' },
+      author: { '@type': 'Person', name: getAuthorName(author) },
       publisher: {
         '@type': 'Organization',
         name: 'PulseToob',

@@ -1,5 +1,6 @@
 const RSS = require('rss');
 const { Article, Category, User, Media } = require('../models');
+const { getAuthorName } = require('../utils/authorName');
 
 class RSSService {
   async generateMainFeed() {
@@ -31,7 +32,7 @@ class RSSService {
         url: `${process.env.SITE_URL}/article/${article.slug}`,
         guid: article.id,
         categories: article.categories?.map(c => c.name) || [],
-        author: article.author?.username || 'PulseToob',
+        author: getAuthorName(article.author),
         date: article.publishedAt,
         enclosure: article.featuredImage?.url ? { url: article.featuredImage.url, type: 'image/jpeg' } : undefined,
       });
@@ -56,7 +57,7 @@ class RSSService {
     const articles = await Article.findAll({
       include: [
         { model: Category, as: 'categories', where: { id: category.id }, attributes: [] },
-        { model: User, as: 'author', attributes: ['username'] },
+        { model: User, as: 'author', attributes: ['username', 'firstName', 'lastName'] },
         { model: Media, as: 'featuredImage' },
       ],
       where: { status: 'published', rssIncluded: true },
@@ -70,7 +71,7 @@ class RSSService {
         description: article.excerpt || '',
         url: `${process.env.SITE_URL}/article/${article.slug}`,
         guid: article.id,
-        author: article.author?.username || 'PulseToob',
+        author: getAuthorName(article.author),
         date: article.publishedAt,
       });
     });
@@ -93,7 +94,7 @@ class RSSService {
       order: [['publishedAt', 'DESC']],
       limit: 100,
       include: [
-        { model: User, as: 'author', attributes: ['username'] },
+        { model: User, as: 'author', attributes: ['username', 'firstName', 'lastName'] },
         { model: Media, as: 'featuredImage' },
         { model: Category, as: 'categories' },
       ],
@@ -106,7 +107,7 @@ class RSSService {
         url: `${process.env.SITE_URL}/article/${article.slug}`,
         guid: article.id,
         categories: article.categories?.map(c => c.name) || [],
-        author: article.author?.username || 'PulseToob',
+        author: getAuthorName(article.author),
         date: article.publishedAt,
         enclosure: article.featuredImage?.url ? { url: article.featuredImage.url, type: 'image/jpeg' } : undefined,
       });

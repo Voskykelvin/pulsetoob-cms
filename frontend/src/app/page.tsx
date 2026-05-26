@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import AdSlot from '@/components/AdSlot'
 import { getApiBaseUrl } from '@/utils/apiBase'
+import { getAuthorName } from '@/utils/author'
 
 const API = getApiBaseUrl()
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
@@ -138,7 +139,7 @@ export default function HomePage() {
                       {hero.excerpt || 'Read the full story to discover more details about this newly published narrative.'}
                     </p>
                     <div className="flex items-center gap-3 text-xs font-semibold text-gray-500">
-                      <span className="text-gray-800">{hero.author?.username || 'PulseToob'}</span>
+                      <span className="text-gray-800">{getAuthorName(hero.author)}</span>
                       <span>|</span>
                       <span>{hero.readTime || 5} min read</span>
                       {hero.publishedAt && (
@@ -185,7 +186,7 @@ export default function HomePage() {
                             <p className="text-xs text-gray-500 line-clamp-2">{article.excerpt}</p>
                           </div>
                           <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 border-t border-gray-100 pt-3">
-                            <span>{article.author?.username || 'PulseToob'}</span>
+                            <span>{getAuthorName(article.author)}</span>
                             <span>{article.readTime || 5} min</span>
                           </div>
                         </div>

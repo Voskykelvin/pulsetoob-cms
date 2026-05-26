@@ -72,11 +72,27 @@ const editorStyles = `
 `
 
 function MenuBar({ editor }: { editor: any }) {
-  if (!editor) return null
-
   const [showLinkInput, setShowLinkInput] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const getDefaultAltText = (filename: string) =>
+    filename.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').trim()
+
+  const promptForImageDetails = (defaultAlt = '', defaultCredit = '') => {
+    const altText = prompt('Alt text for this image:', defaultAlt)
+    if (altText === null) return null
+
+    const credit = prompt('Image credit (optional):', defaultCredit)
+    if (credit === null) return null
+
+    return {
+      altText: altText.trim() || defaultAlt,
+      credit: credit.trim(),
+    }
+  }
+
+  if (!editor) return null
 
   const addLink = () => {
     if (linkUrl) {
@@ -89,14 +105,26 @@ function MenuBar({ editor }: { editor: any }) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const imageDetails = promptForImageDetails(getDefaultAltText(file.name))
+    if (!imageDetails) {
+      e.target.value = ''
+      return
+    }
+
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('altText', imageDetails.altText)
+      if (imageDetails.credit) formData.append('caption', imageDetails.credit)
       const res = await api.post('/media/upload/image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       if (res.data.success) {
-        editor.chain().focus().setImage({ src: res.data.data.url, alt: res.data.data.altText || file.name }).run()
+        editor.chain().focus().setImage({
+          src: res.data.data.url,
+          alt: res.data.data.altText || imageDetails.altText,
+          title: res.data.data.caption || imageDetails.credit || undefined,
+        }).run()
       }
     } catch (err) {
       alert('Image upload failed')
@@ -106,7 +134,32 @@ function MenuBar({ editor }: { editor: any }) {
 
   const addImageUrl = () => {
     const url = prompt('Enter image URL:')
-    if (url) editor.chain().focus().setImage({ src: url }).run()
+    if (!url?.trim()) return
+
+    const imageDetails = promptForImageDetails('')
+    if (!imageDetails) return
+
+    editor.chain().focus().setImage({
+      src: url.trim(),
+      alt: imageDetails.altText,
+      title: imageDetails.credit || undefined,
+    }).run()
+  }
+
+  const editSelectedImage = () => {
+    const attrs = editor.getAttributes('image')
+    if (!attrs.src) {
+      alert('Select an image in the editor first.')
+      return
+    }
+
+    const imageDetails = promptForImageDetails(attrs.alt || '', attrs.title || '')
+    if (!imageDetails) return
+
+    editor.chain().focus().updateAttributes('image', {
+      alt: imageDetails.altText,
+      title: imageDetails.credit || null,
+    }).run()
   }
 
   const baseClass = "p-1.5 rounded transition duration-150 text-sm flex items-center justify-center min-w-[32px] h-[32px]"
@@ -308,6 +361,15 @@ function MenuBar({ editor }: { editor: any }) {
         title="Image URL"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+      </button>
+      <button
+        type="button"
+        onClick={editSelectedImage}
+        disabled={!editor.isActive('image')}
+        className={`${btnStyle(editor.isActive('image'))} disabled:opacity-30`}
+        title="Edit selected image alt text and credit"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536M4 20h4.586a1 1 0 00.707-.293L19.5 9.5a2.121 2.121 0 00-3-3L6.293 16.707A1 1 0 006 17.414V20z" /></svg>
       </button>
 
       <div className="w-[1px] h-6 bg-gray-200 mx-1" />

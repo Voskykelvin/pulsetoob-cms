@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getImageUrl } from '@/utils/imageUrl'
+import { getAuthorName } from '@/utils/author'
 
 interface ArticleCardProps {
   article: {
@@ -21,7 +22,7 @@ interface ArticleCardProps {
 export default function ArticleCard({ article }: ArticleCardProps) {
   const { title, excerpt, slug, author, featuredImage, readTime, createdAt, publishedAt, categories } = article
   const imageUrl = featuredImage ? getImageUrl(featuredImage.thumbnailUrl || featuredImage.url) : null
-  const authorName = author?.firstName ? `${author.firstName} ${author.lastName || ''}` : author?.username || 'PulseToob'
+  const authorName = getAuthorName(author)
 
   return (
     <article style={{ background: 'white', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e5e7eb', transition: 'all 0.2s', cursor: 'pointer' }}

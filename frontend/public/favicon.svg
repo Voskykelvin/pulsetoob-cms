@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>PulseToob</title>
+  <rect width="512" height="512" rx="96" fill="#f0fdf4"/>
+  <path fill="#16a34a" d="M157 398V114h124c61 0 104 38 104 94 0 58-43 96-106 96h-62v94h-60Zm60-145h57c31 0 50-17 50-44 0-28-19-44-50-44h-57v88Z"/>
+  <path fill="#0f7a35" d="M217 350h150v48H217z"/>
+</svg>
