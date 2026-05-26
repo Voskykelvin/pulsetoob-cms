@@ -4,6 +4,8 @@ import { useRouter, useParams } from 'next/navigation'
 import api from '@/lib/api'
 import dynamic from 'next/dynamic'
 import { renderArticleContent } from '@/utils/articleContent'
+import { getApiErrorMessage } from '@/utils/apiError'
+import { parseMetaKeywords } from '@/utils/articleForm'
 
 const RichEditor = dynamic(() => import('@/components/editor/RichEditor'), {
   ssr: false,
@@ -231,7 +233,7 @@ export default function EditArticlePage() {
         ...form,
         status,
         featuredImageId: featuredImage?.id || null, 
-        metaKeywords: form.metaKeywords ? form.metaKeywords.split(',').map(k => k.trim()) : []
+        metaKeywords: parseMetaKeywords(form.metaKeywords)
       }
       // Send PUT request to update existing article
       const res = await api.put(`/articles/${id}`, payload)
@@ -242,7 +244,7 @@ export default function EditArticlePage() {
         router.push('/admin/articles')
       }
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to update article')
+      alert(getApiErrorMessage(err, 'Failed to update article'))
     } finally {
       setSaving(false)
     }

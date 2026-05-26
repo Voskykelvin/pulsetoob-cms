@@ -22,6 +22,11 @@ const optionalBoolean = (field) => body(field)
 
 const optionalStringArray = (field, maxItemLength = 80) => body(field)
   .optional()
+  .customSanitizer((items) => (
+    Array.isArray(items)
+      ? items.map((item) => String(item).trim()).filter(Boolean)
+      : items
+  ))
   .isArray()
   .withMessage(`${field} must be an array`)
   .bail()

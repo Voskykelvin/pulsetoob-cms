@@ -5,6 +5,8 @@ import api from '@/lib/api'
 import dynamic from 'next/dynamic'
 import SeoPanel from '@/components/editor/SeoPanel'
 import { renderArticleContent } from '@/utils/articleContent'
+import { getApiErrorMessage } from '@/utils/apiError'
+import { parseMetaKeywords } from '@/utils/articleForm'
 
 const RichEditor = dynamic(() => import('@/components/editor/RichEditor'), {
   ssr: false,
@@ -192,7 +194,7 @@ export default function NewArticlePage() {
         ...form,
         status,
         featuredImageId: featuredImage?.id || null, 
-        metaKeywords: form.metaKeywords ? form.metaKeywords.split(',').map(k => k.trim()) : []
+        metaKeywords: parseMetaKeywords(form.metaKeywords)
       }
       const res = await api.post('/articles', payload)
       if (res.data.success) {
@@ -202,7 +204,7 @@ export default function NewArticlePage() {
         router.push('/admin/articles')
       }
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to save article')
+      alert(getApiErrorMessage(err, 'Failed to save article'))
     } finally {
       setSaving(false)
     }
