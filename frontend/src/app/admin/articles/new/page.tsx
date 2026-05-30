@@ -211,8 +211,8 @@ export default function NewArticlePage() {
   }
 
   const slugifiedUrl = form.title
-    ? `https://pulsetoob.com/articles/${form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
-    : 'https://pulsetoob.com/articles/your-slug-url'
+    ? `https://www.pulsetoob.com/article/${form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
+    : 'https://www.pulsetoob.com/article/your-slug-url'
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen text-gray-800 font-sans">

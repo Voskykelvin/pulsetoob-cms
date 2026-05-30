@@ -1,11 +1,26 @@
-'use client'
-import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getApiBaseUrl } from '@/utils/apiBase'
 import { getAuthorName } from '@/utils/author'
+import {
+  getFeaturedImageAlt,
+  getFeaturedImageUrl,
+  getPublicArticles,
+  getPublicCategories,
+} from '@/lib/publicContent'
 
-const API = getApiBaseUrl()
+export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'All Stories',
+  description: 'Browse the latest stories, culture updates, lifestyle coverage, and entertainment posts from PulseToob.',
+  alternates: { canonical: '/blog' },
+  openGraph: {
+    title: 'All Stories | PulseToob',
+    description: 'Browse the latest stories, culture updates, lifestyle coverage, and entertainment posts from PulseToob.',
+    url: '/blog',
+    type: 'website',
+  },
+}
 
 const catThemes: Record<string, { text: string; bg: string }> = {
   movies: { text: 'text-purple-700', bg: 'bg-purple-50' },
@@ -19,71 +34,50 @@ const catThemes: Record<string, { text: string; bg: string }> = {
   business: { text: 'text-indigo-700', bg: 'bg-indigo-50' },
 }
 
-function getCatTheme(name: string) {
+function getCatTheme(name?: string | null) {
   const key = name?.toLowerCase().replace(/[^a-z]/g, '') || 'news'
   return catThemes[key] || { text: 'text-slate-700', bg: 'bg-slate-100' }
 }
 
-function getImageUrl(featuredImage: any) {
-  if (!featuredImage) return null
-  if (typeof featuredImage === 'string') return featuredImage
-  if (typeof featuredImage === 'object' && featuredImage.url) return featuredImage.url
-  return null
-}
+export default async function BlogPage({
+  searchParams,
+}: {
+  searchParams?: { category?: string }
+}) {
+  const activeFilter = typeof searchParams?.category === 'string' ? searchParams.category : ''
+  const [articles, categories] = await Promise.all([
+    getPublicArticles({ limit: 20, category: activeFilter }),
+    getPublicCategories(),
+  ])
 
-function BlogContent() {
-  const searchParams = useSearchParams()
-  const categorySlug = searchParams?.get('category')
-  const [articles, setArticles] = useState<any[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState(categorySlug || '')
-
-  useEffect(() => {
-    fetch(API + '/categories?active=true')
-      .then(r => r.json())
-      .then(res => { if (res.success) setCategories(res.data) })
-      .catch((err) => console.error("Categories lookup failed", err))
-  }, [])
-
-  useEffect(() => {
-    setLoading(true)
-    const params = activeFilter ? `?category=${activeFilter}&limit=20` : '?limit=20'
-    fetch(API + '/articles' + params)
-      .then(r => r.json())
-      .then(res => { if (res.success) setArticles(res.data) })
-      .catch((err) => console.error("Failed to load articles", err))
-      .finally(() => setLoading(false))
-  }, [activeFilter])
+  const activeCategory = categories.find((cat) => cat.slug === activeFilter)
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#faf9f6]">
       <div>
-        {/* Nav */}
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
               PulseToob
             </Link>
-            <a href="/admin/articles" className="text-sm font-medium text-gray-600 hover:text-gray-950">
-              Dashboard
-            </a>
+            <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+              Home
+            </Link>
           </div>
         </nav>
 
-        {/* Header Block */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6 text-center space-y-3">
-          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-950">All Stories</h1>
+        <header className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6 text-center space-y-3">
+          <h1 className="text-3xl md:text-5xl font-extrabold text-gray-950">
+            {activeCategory ? activeCategory.name : 'All Stories'}
+          </h1>
           <p className="text-sm md:text-base text-gray-500 max-w-lg mx-auto leading-relaxed">
-            Every narrative cataloged here aims to inform, spark discussion, or share another look at current happenings.
+            {activeCategory?.description || 'Every narrative cataloged here aims to inform, spark discussion, or share another look at current happenings.'}
           </p>
-        </div>
+        </header>
 
-        {/* Filter Badges (Premium Green Switch) */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 flex flex-wrap gap-2.5 justify-center">
-          <button
-            type="button"
-            onClick={() => setActiveFilter('')}
+          <Link
+            href="/blog"
             className={`px-4 py-1.5 rounded-full text-xs font-bold border transition ${
               !activeFilter
                 ? 'bg-green-700 text-white border-transparent shadow-sm'
@@ -91,12 +85,11 @@ function BlogContent() {
             }`}
           >
             All Topics
-          </button>
-          {categories.map((cat: any) => (
-            <button
+          </Link>
+          {categories.map((cat) => (
+            <Link
               key={cat.id}
-              type="button"
-              onClick={() => setActiveFilter(cat.slug)}
+              href={`/blog?category=${cat.slug}`}
               className={`px-4 py-1.5 rounded-full text-xs font-bold border transition ${
                 activeFilter === cat.slug
                   ? 'bg-green-700 text-white border-transparent shadow-sm'
@@ -104,23 +97,24 @@ function BlogContent() {
               }`}
             >
               {cat.name}
-            </button>
+            </Link>
           ))}
         </div>
 
-        {/* Grid List */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          {loading ? (
-            <div className="text-center text-gray-400 font-medium py-12">Loading articles...</div>
-          ) : articles.length === 0 ? (
+          {articles.length === 0 ? (
             <div className="text-center text-gray-400 font-medium py-12">No articles found in this category.</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article: any) => (
-                <div key={article.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm flex flex-col h-full hover:shadow transition duration-150">
+              {articles.map((article) => (
+                <article key={article.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm flex flex-col h-full hover:shadow transition duration-150">
                   <div className="h-44 bg-gray-100 relative">
-                    {getImageUrl(article.featuredImage) ? (
-                      <img src={getImageUrl(article.featuredImage) || ''} alt={article.title} className="w-full h-full object-cover" />
+                    {getFeaturedImageUrl(article.featuredImage) ? (
+                      <img
+                        src={getFeaturedImageUrl(article.featuredImage) || ''}
+                        alt={getFeaturedImageAlt(article)}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center p-4 bg-gray-100 text-center text-gray-400 text-xs font-semibold">
                         {article.title}
@@ -134,9 +128,9 @@ function BlogContent() {
                           {article.categories[0].name}
                         </span>
                       )}
-                      <h4 className="font-bold text-gray-900 line-clamp-2 hover:underline">
+                      <h2 className="font-bold text-gray-900 line-clamp-2 hover:underline">
                         <Link href={`/article/${article.slug}`}>{article.title}</Link>
-                      </h4>
+                      </h2>
                       <p className="text-xs text-gray-500 line-clamp-2">{article.excerpt}</p>
                     </div>
                     <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 border-t border-gray-100 pt-3">
@@ -144,25 +138,16 @@ function BlogContent() {
                       <span>{article.readTime || 5} min</span>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20">
         &copy; {new Date().getFullYear()} PulseToob. All rights reserved.
       </footer>
     </div>
-  )
-}
-
-export default function BlogPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400 font-medium">Loading layout...</div>}>
-      <BlogContent />
-    </Suspense>
   )
 }

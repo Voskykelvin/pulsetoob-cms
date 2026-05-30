@@ -1,13 +1,21 @@
-'use client'
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
+import type { Metadata } from 'next'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import AdSlot from '@/components/AdSlot'
-import { getApiBaseUrl } from '@/utils/apiBase'
 import { getAuthorInitials, getAuthorName } from '@/utils/author'
 import { renderArticleContent } from '@/utils/articleContent'
+import {
+  getArticleDescription,
+  getArticleUrl,
+  getFeaturedImageAlt,
+  getFeaturedImageUrl,
+  getPublicArticle,
+  getSiteUrl,
+  type PublicArticle,
+} from '@/lib/publicContent'
 
-const API = getApiBaseUrl()
+export const dynamic = 'force-dynamic'
+
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
 const ADSENSE_IN_ARTICLE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT
@@ -71,58 +79,109 @@ const renderStyles = `
   .ProseMirror-rendered h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
 `
 
-function getImageUrl(featuredImage: any) {
-  if (!featuredImage) return null
-  if (typeof featuredImage === 'string') return featuredImage
-  if (typeof featuredImage === 'object' && featuredImage.url) return featuredImage.url
-  return null
+function cleanJsonLd(data: Record<string, unknown>) {
+  return JSON.stringify(data).replace(/</g, '\\u003c')
 }
 
-function getImageAlt(featuredImage: any, fallback: string) {
-  if (featuredImage && typeof featuredImage === 'object' && featuredImage.altText) return featuredImage.altText
-  return fallback
-}
+function getArticleSchema(article: PublicArticle) {
+  const url = getArticleUrl(article)
+  const imageUrl = getFeaturedImageUrl(article.featuredImage)
+  const description = getArticleDescription(article)
 
-export default function ArticlePage() {
-  const params = useParams()
-  const [article, setArticle] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (params?.slug) {
-      fetch(API + '/articles/' + params.slug)
-        .then(r => r.json())
-        .then(res => { if (res.success) setArticle(res.data) })
-        .catch((err) => console.error("Could not fetch article", err))
-        .finally(() => setLoading(false))
-    }
-  }, [params])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-400 font-medium">
-        Loading story...
-      </div>
-    )
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    headline: article.title,
+    description,
+    image: imageUrl ? [imageUrl] : undefined,
+    datePublished: article.publishedAt || article.createdAt,
+    dateModified: article.updatedAt || article.publishedAt || article.createdAt,
+    author: {
+      '@type': 'Person',
+      name: getAuthorName(article.author, 'PulseToob Staff'),
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'PulseToob',
+      url: getSiteUrl(),
+    },
+    articleSection: article.categories?.map((category) => category.name),
+    keywords: article.metaKeywords?.join(', '),
   }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
+}): Promise<Metadata> {
+  const article = await getPublicArticle(params.slug, { trackView: false })
 
   if (!article) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
-        <h2 className="text-xl font-bold text-gray-950">Article not found</h2>
-        <Link href="/" className="px-4 py-2 bg-gray-950 text-white font-semibold text-sm rounded-lg hover:bg-gray-900 transition">
-          Go Home
-        </Link>
-      </div>
-    )
+    return {
+      title: 'Article not found',
+      robots: { index: false, follow: false },
+    }
   }
+
+  const title = article.metaTitle || article.title
+  const description = getArticleDescription(article)
+  const url = getArticleUrl(article)
+  const imageUrl = getFeaturedImageUrl(article.featuredImage)
+  const imageAlt = getFeaturedImageAlt(article)
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: article.canonicalUrl || url,
+    },
+    openGraph: {
+      title: article.ogTitle || title,
+      description: article.ogDescription || description,
+      url,
+      type: 'article',
+      publishedTime: article.publishedAt || undefined,
+      modifiedTime: article.updatedAt || undefined,
+      authors: [getAuthorName(article.author, 'PulseToob Staff')],
+      section: article.categories?.[0]?.name,
+      tags: article.tags?.map((tag) => tag.name),
+      images: imageUrl ? [{ url: imageUrl, alt: imageAlt }] : undefined,
+    },
+    twitter: {
+      card: imageUrl ? 'summary_large_image' : 'summary',
+      title: article.ogTitle || title,
+      description: article.ogDescription || description,
+      images: imageUrl ? [imageUrl] : undefined,
+    },
+  }
+}
+
+export default async function ArticlePage({
+  params,
+}: {
+  params: { slug: string }
+}) {
+  const article = await getPublicArticle(params.slug)
+
+  if (!article) notFound()
+
+  const imageUrl = getFeaturedImageUrl(article.featuredImage)
+  const schema = getArticleSchema(article)
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#faf9f6]">
       <style dangerouslySetInnerHTML={{ __html: renderStyles }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: cleanJsonLd(schema) }}
+      />
 
       <div>
-        {/* Nav */}
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
@@ -136,13 +195,12 @@ export default function ArticlePage() {
 
         <AdSlot slot="header_leaderboard" adsenseClient={ADSENSE_CLIENT} adsenseSlot={ADSENSE_HEADER_SLOT} />
 
-        {/* Hero Banner Image */}
-        {getImageUrl(article.featuredImage) && (
+        {imageUrl && (
           <figure className="border-b border-gray-100 bg-white">
             <div className="w-full h-[300px] sm:h-[450px] relative overflow-hidden bg-gray-200">
-              <img src={getImageUrl(article.featuredImage) || ''} alt={getImageAlt(article.featuredImage, article.title)} className="w-full h-full object-cover" />
+              <img src={imageUrl} alt={getFeaturedImageAlt(article)} className="w-full h-full object-cover" />
             </div>
-            {article.featuredImage?.caption && (
+            {typeof article.featuredImage === 'object' && article.featuredImage?.caption && (
               <figcaption className="max-w-3xl mx-auto px-4 py-2 text-xs text-gray-500">
                 {article.featuredImage.caption}
               </figcaption>
@@ -150,17 +208,16 @@ export default function ArticlePage() {
           </figure>
         )}
 
-        {/* Content Container */}
         <main className="max-w-3xl mx-auto px-4 py-12">
-          {article.categories?.length > 0 && (
+          {article.categories?.length ? (
             <div className="flex flex-wrap gap-2 mb-4">
-              {article.categories.map((cat: any) => (
+              {article.categories.map((cat) => (
                 <span key={cat.id} className="text-xs font-extrabold uppercase tracking-widest text-green-700">
                   {cat.name}
                 </span>
               ))}
             </div>
-          )}
+          ) : null}
 
           <h1 className="text-3xl md:text-5xl font-extrabold text-gray-950 leading-tight mb-4">
             {article.title}
@@ -172,17 +229,20 @@ export default function ArticlePage() {
             </h2>
           )}
 
-          {/* Author */}
           <div className="flex items-center gap-3 border-b border-gray-200 pb-8 mb-8 text-sm text-gray-500">
             <div className="w-10 h-10 rounded-full bg-green-50 text-green-700 border border-green-100 flex items-center justify-center font-bold">
               {getAuthorInitials(article.author)}
             </div>
             <div>
-              <span className="block font-bold text-gray-900 hover:underline cursor-pointer">
+              <span className="block font-bold text-gray-900">
                 {getAuthorName(article.author, 'PulseToob Staff')}
               </span>
               <span className="block text-xs mt-0.5">
-                {article.publishedAt && new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                {article.publishedAt && (
+                  <time dateTime={article.publishedAt}>
+                    {new Date(article.publishedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </time>
+                )}
                 {article.readTime && ` | ${article.readTime} min read`}
               </span>
             </div>
@@ -190,24 +250,23 @@ export default function ArticlePage() {
 
           <AdSlot slot="in_article_banner" adsenseClient={ADSENSE_CLIENT} adsenseSlot={ADSENSE_IN_ARTICLE_SLOT} />
 
-          <article 
+          <article
             className="ProseMirror-rendered max-w-none text-gray-900 leading-relaxed text-base md:text-lg space-y-6"
             dangerouslySetInnerHTML={{ __html: renderArticleContent(article.content) }}
           />
 
-          {article.tags?.length > 0 && (
+          {article.tags?.length ? (
             <div className="flex flex-wrap gap-2 mt-12 border-t border-gray-100 pt-6">
-              {article.tags.map((tag: any) => (
-                <span key={tag.id} className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-md text-xs font-semibold cursor-pointer">
+              {article.tags.map((tag) => (
+                <span key={tag.id} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">
                   #{tag.name}
                 </span>
               ))}
             </div>
-          )}
+          ) : null}
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20">
         &copy; {new Date().getFullYear()} PulseToob. All rights reserved.
       </footer>

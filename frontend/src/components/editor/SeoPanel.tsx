@@ -10,7 +10,7 @@ interface SeoPanelProps {
   featuredImageUrl?: string | null
 }
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pulsetoob.com'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com'
 
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
 

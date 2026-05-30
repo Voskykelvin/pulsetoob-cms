@@ -187,7 +187,7 @@ class ArticleController {
         }
       }
 
-      if (article.status === 'published' && article.authorId !== req.userId) {
+      if (article.status === 'published' && article.authorId !== req.userId && req.query.trackView !== 'false') {
         await article.increment('views');
       }
 

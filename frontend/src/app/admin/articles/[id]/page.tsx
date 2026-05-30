@@ -251,8 +251,8 @@ export default function EditArticlePage() {
   }
 
   const slugifiedUrl = form.title
-    ? `https://pulsetoob.com/articles/${form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
-    : 'https://pulsetoob.com/articles/your-slug-url'
+    ? `https://www.pulsetoob.com/article/${form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`
+    : 'https://www.pulsetoob.com/article/your-slug-url'
 
   if (loading) {
     return (

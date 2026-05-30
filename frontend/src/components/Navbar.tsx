@@ -16,8 +16,7 @@ export default function Navbar() {
         <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: '1.5rem' }} className="desktop-nav">
             <Link href="/" style={{ color: '#374151', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}>Home</Link>
-            <Link href="/admin/articles" style={{ color: '#374151', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}>Stories</Link>
-            <Link href="/admin" style={{ color: '#374151', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}>Dashboard</Link>
+            <Link href="/blog" style={{ color: '#374151', textDecoration: 'none', fontSize: '0.9rem', fontWeight: '500' }}>Stories</Link>
           </div>
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -32,8 +31,7 @@ export default function Navbar() {
       {isOpen && (
         <div style={{ background: 'white', borderTop: '1px solid #e5e7eb', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Link href="/" onClick={() => setIsOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>Home</Link>
-          <Link href="/admin/articles" onClick={() => setIsOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>Stories</Link>
-          <Link href="/admin" onClick={() => setIsOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>Dashboard</Link>
+          <Link href="/blog" onClick={() => setIsOpen(false)} style={{ color: '#374151', textDecoration: 'none', fontWeight: '500' }}>Stories</Link>
         </div>
       )}
     </nav>
