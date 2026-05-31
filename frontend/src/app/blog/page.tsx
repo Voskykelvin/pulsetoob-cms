@@ -60,9 +60,14 @@ export default async function BlogPage({
             <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
               PulseToob
             </Link>
-            <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-950">
-              Home
-            </Link>
+            <div className="flex items-center gap-5">
+              <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                Home
+              </Link>
+              <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                Contact
+              </Link>
+            </div>
           </div>
         </nav>
 
@@ -145,8 +150,9 @@ export default async function BlogPage({
         </main>
       </div>
 
-      <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20">
-        &copy; {new Date().getFullYear()} PulseToob. All rights reserved.
+      <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20 space-x-4">
+        <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
+        <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
       </footer>
     </div>
   )

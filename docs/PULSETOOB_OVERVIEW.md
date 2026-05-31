@@ -33,6 +33,8 @@ The project is built as a full-stack application with a separate frontend and ba
 - Featured image management with preview, alt text, and credit fields.
 - Category management and article categorization.
 - Public blog listing and article detail pages.
+- Public contact page for collaboration, advertising, corrections, and story tips.
+- Newsletter signup storage for reader email capture.
 - Author display cleanup so names do not need to include `@pulsetoob`.
 - Green PulseToob `P` favicon for browser/search identity.
 - SEO fields including meta title, meta description, keywords, Open Graph fields, and schema support.
@@ -63,6 +65,7 @@ Recent completed updates:
 - Improved validation alerts so failed publishes show the exact field.
 - Removed the hard 320-character publish limit on article excerpts.
 - Added real public traffic tracking for the analytics dashboard.
+- Added working newsletter signup and a public contact form.
 
 ## Production Frameworks And Services
 

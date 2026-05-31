@@ -19,6 +19,7 @@ const backlinkRoutes = require('./routes/backlinks');
 const analyticsRoutes = require('./routes/analytics');
 const adminRoutes = require('./routes/admin');
 const adRoutes = require('./routes/ads');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 
@@ -75,6 +76,7 @@ app.use('/api/backlinks', backlinkRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/ads', adRoutes);
+app.use('/api/public', publicRoutes);
 
 app.get('/health', (req, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));

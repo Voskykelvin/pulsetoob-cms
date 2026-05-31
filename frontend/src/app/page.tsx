@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import AdSlot from '@/components/AdSlot'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import { getAuthorName } from '@/utils/author'
 import {
   getFeaturedImageAlt,
@@ -65,9 +66,14 @@ export default async function HomePage() {
             <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
               PulseToob
             </Link>
-            <Link href="/blog" className="text-sm font-medium text-gray-600 hover:text-gray-950">
-              All Stories
-            </Link>
+            <div className="flex items-center gap-5">
+              <Link href="/blog" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                All Stories
+              </Link>
+              <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                Contact
+              </Link>
+            </div>
           </div>
         </nav>
 
@@ -243,12 +249,7 @@ export default async function HomePage() {
               <section className="bg-green-50 rounded-2xl p-8 sm:p-12 text-center border border-green-100 max-w-4xl mx-auto space-y-4 shadow-sm">
                 <h2 className="text-2xl font-extrabold text-green-950">Get the pulse. Weekly.</h2>
                 <p className="text-green-800 text-sm max-w-md mx-auto font-medium">The best stories from PulseToob, curated and delivered every Sunday morning.</p>
-                <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto pt-2">
-                  <input type="email" placeholder="Your email address" className="w-full px-4 py-3 text-sm rounded-lg border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 text-black shadow-inner" />
-                  <button type="button" className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold shadow transition-all whitespace-nowrap">
-                    Subscribe Free
-                  </button>
-                </div>
+                <NewsletterSignup />
               </section>
             </div>
           )}
@@ -265,6 +266,7 @@ export default async function HomePage() {
             <span className="font-semibold text-gray-900">Explore</span>
             <Link href="/" className="hover:underline">Home</Link>
             <Link href="/blog" className="hover:underline">All Stories</Link>
+            <Link href="/contact" className="hover:underline">Contact</Link>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-100 py-6 flex flex-col sm:flex-row justify-between text-xs text-gray-400">
