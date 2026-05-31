@@ -1,28 +1,33 @@
 'use client'
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { trackAnalyticsEvent } from '@/utils/analytics'
 
+const EXCLUDED_PREFIXES = ['/admin', '/login']
 const MIN_DURATION_SECONDS = 2
 const BOUNCE_SECONDS = 10
 
-export default function ArticleViewTracker({
-  articleId,
-  slug,
-}: {
-  articleId: string
-  slug: string
-}) {
+function shouldTrackPath(pathname: string) {
+  if (EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return false
+  if (pathname.startsWith('/article/')) return false
+  return true
+}
+
+export default function SiteAnalyticsTracker() {
+  const pathname = usePathname()
+
   useEffect(() => {
-    if (!articleId) return
+    if (!pathname || !shouldTrackPath(pathname)) return
 
     const startedAt = Date.now()
     let sentDuration = false
 
     trackAnalyticsEvent({
-      eventType: 'article_view',
-      articleId,
-      metadata: { slug, pageType: 'article' },
+      eventType: 'page_view',
+      metadata: {
+        pageType: pathname === '/' ? 'home' : 'public',
+      },
     })
 
     const sendDuration = () => {
@@ -33,18 +38,16 @@ export default function ArticleViewTracker({
       if (duration >= MIN_DURATION_SECONDS) {
         trackAnalyticsEvent({
           eventType: 'time_on_page',
-          articleId,
           duration,
-          metadata: { path: `/article/${slug}`, slug, pageType: 'article' },
+          metadata: { path: pathname, pageType: pathname === '/' ? 'home' : 'public' },
         })
       }
 
       if (duration < BOUNCE_SECONDS) {
         trackAnalyticsEvent({
           eventType: 'bounce',
-          articleId,
           duration,
-          metadata: { path: `/article/${slug}`, slug, pageType: 'article' },
+          metadata: { path: pathname, pageType: pathname === '/' ? 'home' : 'public' },
         })
       }
     }
@@ -61,7 +64,7 @@ export default function ArticleViewTracker({
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pagehide', sendDuration)
     }
-  }, [articleId, slug])
+  }, [pathname])
 
   return null
 }

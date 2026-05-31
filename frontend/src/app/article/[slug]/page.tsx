@@ -181,7 +181,7 @@ export default async function ArticlePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: cleanJsonLd(schema) }}
       />
-      <ArticleViewTracker slug={params.slug} />
+      <ArticleViewTracker articleId={article.id} slug={params.slug} />
 
       <div>
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">

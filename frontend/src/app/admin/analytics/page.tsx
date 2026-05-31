@@ -32,7 +32,7 @@ export default function AnalyticsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-sm text-gray-500 mt-1">Track views, reader engagement, and traffic sources.</p>
+          <p className="text-sm text-gray-500 mt-1">Track public page views, reader engagement, and traffic sources.</p>
         </div>
         <div className="flex gap-1 bg-white border border-gray-200 p-1 rounded-lg">
           {['24h', '7d', '30d', '90d'].map((p) => (
@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: 'Total Views', value: data.overview?.totalViews?.toLocaleString() || 0 },
+              { label: 'Page Views', value: data.overview?.totalViews?.toLocaleString() || 0 },
               { label: 'Unique Visitors', value: data.overview?.uniqueVisitors?.toLocaleString() || 0 },
               { label: 'Avg Duration', value: `${data.overview?.avgDuration || 0}s` },
               { label: 'Bounce Rate', value: `${data.overview?.bounceRate || 0}%` },

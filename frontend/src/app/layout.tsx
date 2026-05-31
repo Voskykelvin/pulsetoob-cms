@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import SiteAnalyticsTracker from '@/components/SiteAnalyticsTracker'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -42,6 +43,7 @@ export default function RootLayout({
             strategy="afterInteractive"
           />
         )}
+        <SiteAnalyticsTracker />
         {children}
       </body>
     </html>

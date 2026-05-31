@@ -42,6 +42,7 @@ The project is built as a full-stack application with a separate frontend and ba
 - Admin user management with roles and permissions.
 - Advertisement slot management.
 - Analytics and backlink management.
+- Public traffic tracking for page views, article views, sources, devices, duration, and bounce signals.
 
 ## Current Status
 
@@ -61,6 +62,7 @@ Recent completed updates:
 - Cleaned public author names by removing trailing `@pulsetoob` or `@pulsetoob.com`.
 - Improved validation alerts so failed publishes show the exact field.
 - Removed the hard 320-character publish limit on article excerpts.
+- Added real public traffic tracking for the analytics dashboard.
 
 ## Production Frameworks And Services
 
@@ -172,6 +174,7 @@ Use this section as a living list for future changes.
 - Add search.
 - Add newsletter storage or provider integration.
 - Improve mobile article typography and spacing.
+- Add Facebook Page crossposting when the site has a larger publishing/audience base. See `docs/FACEBOOK_CROSSPOSTING_DEFERRED.md`.
 
 ### Admin Tweaks
 
@@ -187,6 +190,7 @@ Use this section as a living list for future changes.
 - Add uptime checks for frontend, backend, and database.
 - Add deployment smoke tests after Vercel and Render deploy.
 - Add error tracking such as Sentry or another monitoring service.
+- Add a queue/retry worker for social crossposting at higher publishing volume.
 
 ## Verification Checklist
 

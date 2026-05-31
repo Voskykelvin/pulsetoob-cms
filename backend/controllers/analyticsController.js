@@ -1,23 +1,41 @@
 const { Analytics, Article, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
+const VIEW_EVENT_TYPES = ['page_view', 'article_view'];
+const ANALYTICS_EVENT_TYPES = ['page_view', 'article_view', 'share', 'click', 'scroll', 'time_on_page', 'bounce'];
+
+function truncate(value, maxLength) {
+  if (typeof value !== 'string') return value;
+  return value.slice(0, maxLength);
+}
+
 class AnalyticsController {
   async trackEvent(req, res) {
     try {
       const { articleId, eventType, sessionId, visitorId, source, medium, referrer, duration } = req.body;
       const userAgent = req.headers['user-agent'];
+      const safeEventType = ANALYTICS_EVENT_TYPES.includes(eventType) ? eventType : null;
+      const parsedDuration = Number.parseInt(duration, 10);
+
+      if (!safeEventType) return res.status(202).json({ success: true });
 
       await Analytics.create({
-        articleId, eventType, sessionId, visitorId,
-        source, medium, referrer: referrer || req.headers.referer,
+        articleId: articleId || null,
+        eventType: safeEventType,
+        sessionId: truncate(sessionId, 255),
+        visitorId: truncate(visitorId, 255),
+        source: truncate(source, 255),
+        medium: truncate(medium, 255),
+        referrer: truncate(referrer || req.headers.referer, 500),
         userAgent, ipAddress: req.ip,
         device: this.detectDevice(userAgent),
         browser: this.detectBrowser(userAgent),
         os: this.detectOS(userAgent),
-        duration, metadata: req.body.metadata || {},
+        duration: Number.isFinite(parsedDuration) ? parsedDuration : null,
+        metadata: req.body.metadata || {},
       });
 
-      if (eventType === 'article_view' && articleId) {
+      if (safeEventType === 'article_view' && articleId) {
         await Article.increment('views', { where: { id: articleId } });
       }
 
@@ -31,12 +49,30 @@ class AnalyticsController {
     try {
       const { period = '7d' } = req.query;
       const startDate = this.getStartDate(period);
+      const viewWhere = {
+        eventType: { [Op.in]: VIEW_EVENT_TYPES },
+        createdAt: { [Op.gte]: startDate },
+      };
 
-      const totalViews = await Analytics.count({ where: { eventType: 'article_view', createdAt: { [Op.gte]: startDate } } });
-      const uniqueVisitors = await Analytics.count({ where: { createdAt: { [Op.gte]: startDate } }, distinct: true, col: 'visitorId' });
+      const totalViews = await Analytics.count({ where: viewWhere });
+      const uniqueVisitors = await Analytics.count({
+        where: { ...viewWhere, visitorId: { [Op.ne]: null } },
+        distinct: true,
+        col: 'visitorId',
+      });
+      const totalSessions = await Analytics.count({
+        where: { ...viewWhere, sessionId: { [Op.ne]: null } },
+        distinct: true,
+        col: 'sessionId',
+      });
+      const bouncedSessions = await Analytics.count({
+        where: { eventType: 'bounce', createdAt: { [Op.gte]: startDate }, sessionId: { [Op.ne]: null } },
+        distinct: true,
+        col: 'sessionId',
+      });
 
       const viewsByDay = await Analytics.findAll({
-        where: { eventType: 'article_view', createdAt: { [Op.gte]: startDate } },
+        where: viewWhere,
         attributes: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'date'], [sequelize.fn('COUNT', '*'), 'views']],
         group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
         order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']],
@@ -44,7 +80,7 @@ class AnalyticsController {
       });
 
       const trafficSources = await Analytics.findAll({
-        where: { createdAt: { [Op.gte]: startDate }, source: { [Op.ne]: null } },
+        where: { ...viewWhere, source: { [Op.ne]: null } },
         attributes: ['source', [sequelize.fn('COUNT', '*'), 'count']],
         group: ['source'],
         order: [[sequelize.fn('COUNT', '*'), 'DESC']],
@@ -52,7 +88,7 @@ class AnalyticsController {
       });
 
       const deviceBreakdown = await Analytics.findAll({
-        where: { createdAt: { [Op.gte]: startDate }, device: { [Op.ne]: null } },
+        where: { ...viewWhere, device: { [Op.ne]: null } },
         attributes: ['device', [sequelize.fn('COUNT', '*'), 'count']],
         group: ['device'], raw: true,
       });
@@ -69,7 +105,7 @@ class AnalyticsController {
           overview: {
             totalViews, uniqueVisitors,
             avgDuration: Math.round(avgDuration?.avgDuration || 0),
-            bounceRate: 0,
+            bounceRate: totalSessions > 0 ? Math.round((bouncedSessions / totalSessions) * 100) : 0,
           },
           viewsByDay, trafficSources, deviceBreakdown, period,
         },
@@ -115,7 +151,7 @@ class AnalyticsController {
   }
 
   detectDevice(ua) {
-    if (!ua) return 'unknown';
+    if (!ua) return null;
     if (/tablet|ipad/i.test(ua)) return 'tablet';
     if (/mobile|iphone|android.*mobile/i.test(ua)) return 'mobile';
     return 'desktop';
