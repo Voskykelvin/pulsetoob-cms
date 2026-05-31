@@ -8,6 +8,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const contactEmail = user?.email || 'kelvinvosky2@gmail.com'
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -64,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <span style={{ background: '#f0fdf4', color: '#16a34a', padding: '0.2rem 0.6rem', borderRadius: '20px', fontSize: '0.75rem', border: '1px solid #bbf7d0' }}>Admin</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Welcome, {user?.firstName || user?.username}</span>
+          <span style={{ color: '#6b7280', fontSize: '0.9rem' }}>Welcome, {contactEmail}</span>
           <button onClick={handleLogout} style={{ padding: '0.5rem 1rem', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white', cursor: 'pointer', fontSize: '0.875rem', color: '#374151', outline: 'none' }}>
             Logout
           </button>

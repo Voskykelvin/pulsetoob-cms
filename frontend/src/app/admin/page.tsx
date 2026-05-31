@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import api from '@/lib/api'
+import { getApiBaseUrl } from '@/utils/apiBase'
 
 interface Stats {
   users: number
@@ -31,6 +32,8 @@ const statusItem = {
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const apiUrl = getApiBaseUrl().replace(/\/api$/, '')
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com'
 
   useEffect(() => {
     fetchStats()
@@ -106,9 +109,9 @@ export default function AdminDashboard() {
       <div style={{ marginTop: '1.5rem', background: '#f0fdf4', borderRadius: '12px', padding: '1.25rem', border: '1px solid #bbf7d0' }}>
         <h3 style={{ color: '#16a34a', fontWeight: '600', marginBottom: '0.5rem' }}>System Status</h3>
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <span style={statusItem}>
-            <span style={statusDot} />
-            Backend API: localhost:5000
+            <span style={statusItem}>
+              <span style={statusDot} />
+            Backend API: {apiUrl}
           </span>
           <span style={statusItem}>
             <span style={statusDot} />
@@ -116,7 +119,7 @@ export default function AdminDashboard() {
           </span>
           <span style={statusItem}>
             <span style={statusDot} />
-            Frontend: localhost:3000
+            Frontend: {siteUrl}
           </span>
         </div>
       </div>

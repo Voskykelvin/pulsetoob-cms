@@ -2,13 +2,19 @@ const RSS = require('rss');
 const { Article, Category, User, Media } = require('../models');
 const { getAuthorName } = require('../utils/authorName');
 
+function getSiteUrl() {
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim();
+  return (process.env.SITE_URL || frontendUrl || 'https://www.pulsetoob.com').replace(/\/+$/, '');
+}
+
 class RSSService {
   async generateMainFeed() {
+    const siteUrl = getSiteUrl();
     const feed = new RSS({
       title: 'PulseToob',
       description: 'Breaking stories, entertainment, lifestyle and trending content',
-      site_url: process.env.SITE_URL,
-      feed_url: `${process.env.SITE_URL}/api/rss/feed`,
+      site_url: siteUrl,
+      feed_url: `${siteUrl}/api/rss/feed`,
       language: 'en',
       pubDate: new Date(),
       ttl: 60,
@@ -29,7 +35,7 @@ class RSSService {
       feed.item({
         title: article.title,
         description: article.excerpt || article.metaDescription || '',
-        url: `${process.env.SITE_URL}/article/${article.slug}`,
+        url: `${siteUrl}/article/${article.slug}`,
         guid: article.id,
         categories: article.categories?.map(c => c.name) || [],
         author: getAuthorName(article.author),
@@ -44,12 +50,13 @@ class RSSService {
   async generateCategoryFeed(categorySlug) {
     const category = await Category.findOne({ where: { slug: categorySlug } });
     if (!category) throw new Error('Category not found');
+    const siteUrl = getSiteUrl();
 
     const feed = new RSS({
       title: `PulseToob - ${category.name}`,
       description: category.description || `Latest ${category.name} articles`,
-      site_url: `${process.env.SITE_URL}/${category.slug}`,
-      feed_url: `${process.env.SITE_URL}/api/rss/category/${category.slug}`,
+      site_url: `${siteUrl}/blog?category=${category.slug}`,
+      feed_url: `${siteUrl}/api/rss/category/${category.slug}`,
       language: 'en',
       pubDate: new Date(),
     });
@@ -69,7 +76,7 @@ class RSSService {
       feed.item({
         title: article.title,
         description: article.excerpt || '',
-        url: `${process.env.SITE_URL}/article/${article.slug}`,
+        url: `${siteUrl}/article/${article.slug}`,
         guid: article.id,
         author: getAuthorName(article.author),
         date: article.publishedAt,
@@ -80,11 +87,12 @@ class RSSService {
   }
 
   async generateMSNFeed() {
+    const siteUrl = getSiteUrl();
     const feed = new RSS({
       title: 'PulseToob - MSN Feed',
       description: 'Curated content from PulseToob for MSN',
-      site_url: process.env.SITE_URL,
-      feed_url: `${process.env.SITE_URL}/api/rss/msn`,
+      site_url: siteUrl,
+      feed_url: `${siteUrl}/api/rss/msn`,
       language: 'en',
       pubDate: new Date(),
     });
@@ -104,7 +112,7 @@ class RSSService {
       feed.item({
         title: article.title,
         description: article.excerpt || '',
-        url: `${process.env.SITE_URL}/article/${article.slug}`,
+        url: `${siteUrl}/article/${article.slug}`,
         guid: article.id,
         categories: article.categories?.map(c => c.name) || [],
         author: getAuthorName(article.author),

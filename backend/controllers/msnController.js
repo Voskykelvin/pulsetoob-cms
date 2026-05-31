@@ -2,6 +2,11 @@ const { Article, Category, Media, User } = require('../models');
 const { Op } = require('sequelize');
 const rssService = require('../services/rssService');
 
+function getSiteUrl() {
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim();
+  return (process.env.SITE_URL || frontendUrl || 'https://www.pulsetoob.com').replace(/\/+$/, '');
+}
+
 class MSNController {
   async getEligibleArticles(req, res) {
     try {
@@ -80,7 +85,7 @@ class MSNController {
       const pending = await Article.count({ where: { msnStatus: 'pending' } });
       const approved = await Article.count({ where: { msnStatus: 'approved' } });
       const rejected = await Article.count({ where: { msnStatus: 'rejected' } });
-      res.json({ success: true, data: { totalEligible, totalSubmitted, pending, approved, rejected, feedUrl: `${process.env.SITE_URL}/api/rss/msn` } });
+      res.json({ success: true, data: { totalEligible, totalSubmitted, pending, approved, rejected, feedUrl: `${getSiteUrl()}/api/rss/msn` } });
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch MSN stats' });
     }

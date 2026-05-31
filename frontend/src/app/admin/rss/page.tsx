@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { getApiBaseUrl } from '@/utils/apiBase'
 
 export default function RSSPage() {
   const router = useRouter()
@@ -15,7 +16,7 @@ export default function RSSPage() {
       .catch(() => {})
   }, [router])
 
-  const apiUrl = 'http://localhost:5000'
+  const apiUrl = getApiBaseUrl().replace(/\/api$/, '')
 
   const feeds = [
     { name: 'Main Syndication Feed', url: apiUrl + '/api/rss/feed', desc: 'Syndicate all published blog posts to aggregators.' },

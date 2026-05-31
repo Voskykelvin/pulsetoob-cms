@@ -1,6 +1,11 @@
 const cheerio = require('cheerio');
 const { getAuthorName } = require('../utils/authorName');
 
+function getSiteUrl() {
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim();
+  return (process.env.SITE_URL || frontendUrl || 'https://www.pulsetoob.com').replace(/\/+$/, '');
+}
+
 class SEOService {
   analyzeArticle(article) {
     const analysis = { score: 0, maxScore: 100, checks: [], suggestions: [] };
@@ -241,6 +246,7 @@ class SEOService {
   }
 
   generateArticleSchema(article, author, category) {
+    const siteUrl = getSiteUrl();
     return {
       '@context': 'https://schema.org',
       '@type': 'Article',
@@ -252,9 +258,9 @@ class SEOService {
       publisher: {
         '@type': 'Organization',
         name: 'PulseToob',
-        logo: { '@type': 'ImageObject', url: `${process.env.SITE_URL}/images/logo.png` },
+        logo: { '@type': 'ImageObject', url: `${siteUrl}/favicon.svg` },
       },
-      mainEntityOfPage: { '@type': 'WebPage', '@id': `${process.env.SITE_URL}/article/${article.slug}` },
+      mainEntityOfPage: { '@type': 'WebPage', '@id': `${siteUrl}/article/${article.slug}` },
       wordCount: article.wordCount,
       articleSection: category?.name || 'General',
     };
