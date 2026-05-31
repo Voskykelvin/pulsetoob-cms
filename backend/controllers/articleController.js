@@ -211,7 +211,7 @@ class ArticleController {
       const where = {};
       const include = [
         { model: User, as: 'author', attributes: ['id', 'username', 'firstName', 'lastName', 'avatar'] },
-        { model: Media, as: 'featuredImage', attributes: ['id', 'url', 'thumbnailUrl', 'altText'] },
+        { model: Media, as: 'featuredImage', attributes: ['id', 'url', 'thumbnailUrl', 'altText', 'caption'] },
       ];
 
       if (req.userId && ['admin', 'editor', 'super_admin'].includes(req.userRole)) {
@@ -393,7 +393,7 @@ class ArticleController {
         where: { id: { [Op.ne]: id }, status: 'published' },
         include: [
           { model: Category, as: 'categories', where: categoryIds.length > 0 ? { id: categoryIds } : undefined, required: categoryIds.length > 0 },
-          { model: Media, as: 'featuredImage', attributes: ['url', 'thumbnailUrl', 'altText'] },
+          { model: Media, as: 'featuredImage', attributes: ['url', 'thumbnailUrl', 'altText', 'caption'] },
           { model: User, as: 'author', attributes: ['username', 'avatar'] },
         ],
         order: [['publishedAt', 'DESC']],

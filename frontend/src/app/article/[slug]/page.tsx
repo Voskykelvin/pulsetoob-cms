@@ -53,6 +53,7 @@ const renderStyles = `
   }
   .ProseMirror-rendered figure.content-image {
     margin: 1.75rem 0;
+    text-align: center;
   }
   .ProseMirror-rendered figure.content-image img {
     margin: 0 auto;
@@ -63,6 +64,7 @@ const renderStyles = `
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 0.75rem;
     line-height: 1.4;
+    text-align: center;
   }
   .ProseMirror-rendered pre {
     background: #1e1e2e;
@@ -208,7 +210,7 @@ export default async function ArticlePage({
               <img src={imageUrl} alt={getFeaturedImageAlt(article)} className="w-full h-full object-cover" />
             </div>
             {typeof article.featuredImage === 'object' && article.featuredImage?.caption && (
-              <figcaption className="max-w-3xl mx-auto px-4 py-2 text-xs text-gray-500">
+              <figcaption className="max-w-3xl mx-auto px-4 py-2 text-center text-xs text-gray-500">
                 {article.featuredImage.caption}
               </figcaption>
             )}
