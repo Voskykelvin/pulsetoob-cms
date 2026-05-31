@@ -40,20 +40,24 @@ interface ArticleListResponse extends ApiResponse<PublicArticle[]> {
 }
 
 const API_URL = getApiBaseUrl()
-const REQUEST_TIMEOUT_MS = 8000
+const REQUEST_TIMEOUT_MS = 7000
+const PUBLIC_CONTENT_REVALIDATE_SECONDS = 60
 
 export function getSiteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
 }
 
-async function fetchJson<T>(path: string): Promise<T | null> {
+async function fetchJson<T>(
+  path: string,
+  options: { revalidate?: number; timeoutMs?: number } = {}
+): Promise<T | null> {
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs || REQUEST_TIMEOUT_MS)
   const url = `${API_URL}${path.startsWith('/') ? path : `/${path}`}`
 
   try {
     const response = await fetch(url, {
-      cache: 'no-store',
+      next: { revalidate: options.revalidate ?? PUBLIC_CONTENT_REVALIDATE_SECONDS },
       signal: controller.signal,
     })
 
@@ -86,12 +90,15 @@ export async function getPublicCategories() {
   return result?.success ? result.data : []
 }
 
-export async function getPublicArticle(slug: string, options: { trackView?: boolean } = {}) {
+export async function getPublicArticle(slug: string, options: { trackView?: boolean; revalidate?: number } = {}) {
   const params = new URLSearchParams()
-  if (options.trackView === false) params.set('trackView', 'false')
+  params.set('trackView', options.trackView === true ? 'true' : 'false')
 
   const query = params.toString()
-  const result = await fetchJson<ApiResponse<PublicArticle>>(`/articles/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`)
+  const result = await fetchJson<ApiResponse<PublicArticle>>(
+    `/articles/${encodeURIComponent(slug)}${query ? `?${query}` : ''}`,
+    { revalidate: options.trackView === true ? 0 : options.revalidate }
+  )
 
   return result?.success ? result.data : null
 }

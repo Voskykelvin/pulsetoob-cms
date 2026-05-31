@@ -23,7 +23,20 @@ const adRoutes = require('./routes/ads');
 const app = express();
 
 app.use(helmet());
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === '/health',
+});
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(generalLimiter);
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '50mb' }));
@@ -51,7 +64,7 @@ app.use(cors({
 }));
 
 app.use('/uploads', express.static('uploads'));
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/media', mediaRoutes);
@@ -77,8 +90,9 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('Database connected successfully');
-    await sequelize.sync({ alter: true });
-    console.log('Database synced');
+    const syncOptions = process.env.DB_SYNC_ALTER === 'true' ? { alter: true } : {};
+    await sequelize.sync(syncOptions);
+    console.log(process.env.DB_SYNC_ALTER === 'true' ? 'Database synced with alter' : 'Database synced');
     app.listen(PORT, () => {
       console.log('PulseToob Server running on port ' + PORT);
     });

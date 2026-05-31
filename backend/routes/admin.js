@@ -19,4 +19,5 @@ router.put('/ads/:id', updateAdRules, validate, adController.updateAd.bind(adCon
 router.delete('/ads/:id', authorize('super_admin'), adIdParamRules, validate, adController.deleteAd.bind(adController));
 router.get('/settings', adminController.getSettings.bind(adminController));
 router.put('/settings', adminController.updateSettings.bind(adminController));
+router.post('/settings', adminController.updateSettings.bind(adminController));
 module.exports = router;

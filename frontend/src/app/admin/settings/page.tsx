@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { getApiErrorMessage } from '@/utils/apiError'
 
 interface SettingsState {
   siteName: string;
@@ -15,28 +16,61 @@ interface SettingsState {
   };
 }
 
+const DEFAULT_SETTINGS: SettingsState = {
+  siteName: 'PulseToob',
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com',
+  postsPerPage: 12,
+  allowComments: true,
+  enableRss: true,
+  msn: {
+    enable: false,
+    feedUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com'}/api/rss/msn`,
+  },
+}
+
+function normalizeSettings(data: any): SettingsState {
+  const siteUrl = data?.siteUrl || data?.site?.url || DEFAULT_SETTINGS.siteUrl
+  const msnEnabled = data?.msn?.enable ?? data?.msn?.enabled ?? DEFAULT_SETTINGS.msn?.enable
+
+  return {
+    siteName: data?.siteName || data?.site?.name || DEFAULT_SETTINGS.siteName,
+    siteUrl,
+    postsPerPage: Number(data?.postsPerPage ?? data?.content?.postsPerPage ?? DEFAULT_SETTINGS.postsPerPage),
+    allowComments: Boolean(data?.allowComments ?? data?.content?.allowComments ?? DEFAULT_SETTINGS.allowComments),
+    enableRss: Boolean(data?.enableRss ?? data?.rss?.enabled ?? DEFAULT_SETTINGS.enableRss),
+    msn: {
+      enable: Boolean(msnEnabled),
+      feedUrl: data?.msn?.feedUrl || `${siteUrl.replace(/\/+$/, '')}/api/rss/msn`,
+    },
+  }
+}
+
 export default function SettingsPage() {
   const router = useRouter()
   const [settings, setSettings] = useState<SettingsState | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
       router.push('/login')
       return
     }
-    fetchSettings()
-  }, [])
+    void fetchSettings()
+  }, [router])
 
   const fetchSettings = async () => {
     try {
+      setError('')
       const res = await api.get('/admin/settings')
       if (res.data.success) {
-        setSettings(res.data.data)
+        setSettings(normalizeSettings(res.data.data))
       }
     } catch (err) {
       console.error('Failed to fetch settings:', err)
+      setError(getApiErrorMessage(err, 'Failed to load settings.'))
+      setSettings(DEFAULT_SETTINGS)
     } finally {
       setLoading(false)
     }
@@ -44,15 +78,17 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!settings) return
     setSaving(true)
     try {
-      const res = await api.post('/admin/settings', settings)
+      const res = await api.put('/admin/settings', settings)
       if (res.data.success) {
+        setSettings(normalizeSettings(res.data.data || settings))
         alert('Settings saved successfully!')
       }
     } catch (err) {
       console.error('Failed to save settings:', err)
-      alert('Failed to save settings.')
+      alert(getApiErrorMessage(err, 'Failed to save settings.'))
     } finally {
       setSaving(false)
     }
@@ -85,6 +121,12 @@ export default function SettingsPage() {
         <div className="text-gray-500">Loading...</div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded p-3">
+              {error}
+            </div>
+          )}
+
           {/* Site Information */}
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-xl font-semibold mb-4 text-gray-700">Site Information</h2>

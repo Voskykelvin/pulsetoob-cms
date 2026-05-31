@@ -265,6 +265,26 @@ class ArticleController {
     }
   }
 
+  async trackView(req, res) {
+    try {
+      const { slugOrId } = req.params;
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
+      const where = isUUID ? { id: slugOrId } : { slug: slugOrId };
+
+      const article = await Article.findOne({
+        where: { ...where, status: 'published' },
+        attributes: ['id', 'views'],
+      });
+
+      if (!article) return sendError(res, { status: 404, message: 'Article not found' });
+
+      await article.increment('views');
+      return sendSuccess(res, { data: { id: article.id }, message: 'View tracked' });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to track view' });
+    }
+  }
+
   async delete(req, res) {
     try {
       const { id } = req.params;

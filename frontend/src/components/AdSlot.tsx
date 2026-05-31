@@ -18,6 +18,7 @@ interface AdSlotProps {
 }
 
 const API_URL = getApiBaseUrl()
+const AD_REQUEST_TIMEOUT_MS = 5000
 
 export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps) {
   const [ad, setAd] = useState<Advertisement | null>(null)
@@ -27,8 +28,14 @@ export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps
     let cancelled = false
 
     const fetchAd = async () => {
+      const controller = new AbortController()
+      const timeout = window.setTimeout(() => controller.abort(), AD_REQUEST_TIMEOUT_MS)
+
       try {
-        const res = await fetch(`${API_URL}/ads/${slot}`, { cache: 'no-store' })
+        const res = await fetch(`${API_URL}/ads/${slot}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
         const result = await res.json() as ApiResponse<Advertisement | null>
 
         if (!cancelled && result.success && result.data) {
@@ -38,6 +45,7 @@ export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps
       } catch (err) {
         console.error('Failed to load advertisement slot:', err)
       } finally {
+        window.clearTimeout(timeout)
         if (!cancelled) setLoading(false)
       }
     }

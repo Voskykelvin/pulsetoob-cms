@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdSlot from '@/components/AdSlot'
+import ArticleViewTracker from '@/components/ArticleViewTracker'
 import { getAuthorInitials, getAuthorName } from '@/utils/author'
 import { renderArticleContent } from '@/utils/articleContent'
 import {
@@ -14,7 +15,7 @@ import {
   type PublicArticle,
 } from '@/lib/publicContent'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
@@ -166,7 +167,7 @@ export default async function ArticlePage({
 }: {
   params: { slug: string }
 }) {
-  const article = await getPublicArticle(params.slug)
+  const article = await getPublicArticle(params.slug, { trackView: false })
 
   if (!article) notFound()
 
@@ -180,6 +181,7 @@ export default async function ArticlePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: cleanJsonLd(schema) }}
       />
+      <ArticleViewTracker slug={params.slug} />
 
       <div>
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">

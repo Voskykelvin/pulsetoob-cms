@@ -18,6 +18,7 @@ router.post('/bulk', authenticate, authorize('admin','editor','super_admin'), bu
 router.get('/', optionalAuth, articleListRules, validate, articleController.getAll.bind(articleController));
 router.get('/:id/related', uuidParam(), validate, articleController.getRelated.bind(articleController));
 router.get('/:slugOrId', optionalAuth, articleController.getOne.bind(articleController));
+router.post('/:slugOrId/view', articleController.trackView.bind(articleController));
 router.put('/:id', authenticate, articleUpdateRules, validate, articleController.update.bind(articleController));
 router.delete('/:id', authenticate, uuidParam(), validate, articleController.delete.bind(articleController));
 router.post('/:id/publish', authenticate, uuidParam(), validate, articleController.publish.bind(articleController));

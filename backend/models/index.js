@@ -8,6 +8,7 @@ const Analytics = require('./Analytics');
 const Comment = require('./Comment');
 const Tag = require('./Tag');
 const Advertisement = require('./Advertisement');
+const Setting = require('./Setting');
 
 // User <-> Article
 User.hasMany(Article, { foreignKey: 'authorId', as: 'articles' });
@@ -62,6 +63,7 @@ module.exports = {
   Comment,
   Tag,
   Advertisement,
+  Setting,
   ArticleCategory,
   ArticleTag,
 };

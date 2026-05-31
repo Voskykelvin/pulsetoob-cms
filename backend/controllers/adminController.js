@@ -1,6 +1,48 @@
-const { User, Article, Media, Category, Analytics } = require('../models');
+const { User, Article, Media, Category, Analytics, Setting } = require('../models');
 const { Op } = require('sequelize');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+
+const SETTINGS_KEY = 'site';
+
+const firstConfiguredUrl = () => {
+  const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim();
+  const siteUrl = process.env.SITE_URL || frontendUrl || 'https://www.pulsetoob.com';
+  return siteUrl.replace(/\/+$/, '');
+};
+
+const toBoolean = (value, fallback) => (typeof value === 'boolean' ? value : fallback);
+
+const toPositiveInt = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const normalizeSettings = (input = {}) => {
+  const siteUrl = String(input.siteUrl || input.site?.url || firstConfiguredUrl()).replace(/\/+$/, '');
+  const siteName = String(input.siteName || input.site?.name || 'PulseToob').trim() || 'PulseToob';
+  const postsPerPage = toPositiveInt(input.postsPerPage ?? input.content?.postsPerPage, 12);
+  const allowComments = toBoolean(input.allowComments ?? input.content?.allowComments, true);
+  const enableRss = toBoolean(input.enableRss ?? input.rss?.enabled, true);
+  const msnEnabled = toBoolean(input.msn?.enable ?? input.msn?.enabled, false);
+  const msnFeedUrl = input.msn?.feedUrl || `${siteUrl}/api/rss/msn`;
+
+  return {
+    siteName,
+    siteUrl,
+    postsPerPage,
+    allowComments,
+    enableRss,
+    msn: {
+      enable: msnEnabled,
+      enabled: msnEnabled,
+      feedUrl: msnFeedUrl,
+    },
+    site: { name: siteName, url: siteUrl, language: input.site?.language || 'en' },
+    content: { postsPerPage, allowComments },
+    seo: { enableSitemap: input.seo?.enableSitemap !== false },
+    rss: { enabled: enableRss, itemsPerFeed: toPositiveInt(input.rss?.itemsPerFeed, 50) },
+  };
+};
 
 const ROLE_PERMISSIONS = {
   super_admin: {
@@ -172,20 +214,22 @@ class AdminController {
   }
 
   async getSettings(req, res) {
-    res.json({
-      success: true,
-      data: {
-        site: { name: 'PulseToob', url: process.env.SITE_URL, language: 'en' },
-        content: { postsPerPage: 12, allowComments: true },
-        seo: { enableSitemap: true },
-        rss: { enabled: true, itemsPerFeed: 50 },
-        msn: { enabled: false, feedUrl: `${process.env.SITE_URL}/api/rss/msn` },
-      },
-    });
+    try {
+      const record = await Setting.findByPk(SETTINGS_KEY);
+      return sendSuccess(res, { data: normalizeSettings(record?.value) });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to fetch settings' });
+    }
   }
 
   async updateSettings(req, res) {
-    res.json({ success: true, message: 'Settings updated successfully' });
+    try {
+      const settings = normalizeSettings(req.body);
+      await Setting.upsert({ name: SETTINGS_KEY, value: settings });
+      return sendSuccess(res, { data: settings, message: 'Settings updated successfully' });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to update settings' });
+    }
   }
 
   formatBytes(bytes) {
