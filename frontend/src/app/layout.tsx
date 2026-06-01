@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import SiteAnalyticsTracker from '@/components/SiteAnalyticsTracker'
+import { ADSENSE_CLIENT } from '@/utils/adsense'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -30,19 +30,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
-
   return (
     <html lang="en">
+      <head>
+        <script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
+          crossOrigin="anonymous"
+        ></script>
+      </head>
       <body>
-        {adsenseClient && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
         <SiteAnalyticsTracker />
         {children}
       </body>

@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdSlot from '@/components/AdSlot'
 import ArticleViewTracker from '@/components/ArticleViewTracker'
+import { ADSENSE_CLIENT } from '@/utils/adsense'
 import { getAuthorInitials, getAuthorName } from '@/utils/author'
 import { renderArticleContent } from '@/utils/articleContent'
 import {
@@ -17,7 +18,6 @@ import {
 
 export const revalidate = 60
 
-const ADSENSE_CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
 const ADSENSE_IN_ARTICLE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT
 

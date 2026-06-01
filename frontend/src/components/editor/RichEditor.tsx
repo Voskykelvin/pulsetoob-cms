@@ -169,7 +169,7 @@ function MenuBar({ editor }: { editor: any }) {
   const btnStyle = (active: boolean) => `${baseClass} ${active ? activeClass : inactiveClass}`
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl">
+    <div className="sticky top-16 z-30 flex flex-wrap items-center gap-1.5 p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl shadow-sm">
       {/* Dropdown for Headers */}
       <select
         onChange={(e) => {
@@ -436,7 +436,7 @@ export default function RichEditor({ content, onChange, placeholder }: RichEdito
   const wordCount = editor ? editor.state.doc.textContent.split(/\s+/).filter(w => w.length > 0).length : 0
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+    <div className="border border-gray-200 rounded-xl bg-white shadow-sm">
       <style dangerouslySetInnerHTML={{ __html: editorStyles }} />
       <MenuBar editor={editor} />
       <div className="bg-white min-h-[400px]">
