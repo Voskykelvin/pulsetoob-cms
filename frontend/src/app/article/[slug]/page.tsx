@@ -122,7 +122,17 @@ export async function generateMetadata({
 }: {
   params: { slug: string }
 }): Promise<Metadata> {
-  const article = await getPublicArticle(params.slug, { trackView: false })
+  let article: PublicArticle | null
+
+  try {
+    article = await getPublicArticle(params.slug, { trackView: false })
+  } catch (error) {
+    console.error('Article metadata fetch failed', error)
+    return {
+      title: 'Article temporarily unavailable',
+      robots: { index: false, follow: false },
+    }
+  }
 
   if (!article) {
     return {

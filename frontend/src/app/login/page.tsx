@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import axios from 'axios'
 import api from '@/lib/api'
 
 export default function LoginPage() {
@@ -21,8 +22,23 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(res.data.data.user))
         router.push('/admin')
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Login failed')
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status
+        const apiError = err.response?.data?.error
+
+        if (status === 429) {
+          setError('Too many sign-in attempts. Please try again in a few minutes.')
+        } else if (status === 503) {
+          setError('The admin API is online but not ready yet. Please try again shortly.')
+        } else if (err.code === 'ECONNABORTED' || !err.response) {
+          setError('The admin API is not reachable right now. Please try again shortly.')
+        } else {
+          setError(typeof apiError === 'string' ? apiError : 'Login failed')
+        }
+      } else {
+        setError('Login failed')
+      }
     } finally {
       setLoading(false)
     }

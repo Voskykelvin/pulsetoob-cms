@@ -43,6 +43,16 @@ const API_URL = getApiBaseUrl()
 const REQUEST_TIMEOUT_MS = 7000
 const PUBLIC_CONTENT_REVALIDATE_SECONDS = 60
 
+export class PublicContentFetchError extends Error {
+  status?: number
+
+  constructor(message: string, status?: number) {
+    super(message)
+    this.name = 'PublicContentFetchError'
+    this.status = status
+  }
+}
+
 export function getSiteUrl() {
   return (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
 }
@@ -61,11 +71,21 @@ async function fetchJson<T>(
       signal: controller.signal,
     })
 
-    if (!response.ok) return null
+    if (response.status === 404) return null
+    if (!response.ok) {
+      throw new PublicContentFetchError(`Public content API returned ${response.status}`, response.status)
+    }
+
     return (await response.json()) as T
   } catch (error) {
+    if (error instanceof PublicContentFetchError) throw error
+
     console.error(`Public content fetch failed: ${url}`, error)
-    return null
+    throw new PublicContentFetchError(
+      error instanceof Error && error.name === 'AbortError'
+        ? 'Public content API timed out'
+        : 'Public content API is unavailable'
+    )
   } finally {
     clearTimeout(timeout)
   }
@@ -81,13 +101,23 @@ export async function getPublicArticles(options: { limit?: number; category?: st
 
   if (options.category) params.set('category', options.category)
 
-  const result = await fetchJson<ArticleListResponse>(`/articles?${params.toString()}`)
-  return result?.success ? result.data : []
+  try {
+    const result = await fetchJson<ArticleListResponse>(`/articles?${params.toString()}`)
+    return result?.success ? result.data : []
+  } catch (error) {
+    console.error('Failed to load public articles', error)
+    return []
+  }
 }
 
 export async function getPublicCategories() {
-  const result = await fetchJson<ApiResponse<Category[]>>('/categories?active=true')
-  return result?.success ? result.data : []
+  try {
+    const result = await fetchJson<ApiResponse<Category[]>>('/categories?active=true')
+    return result?.success ? result.data : []
+  } catch (error) {
+    console.error('Failed to load public categories', error)
+    return []
+  }
 }
 
 export async function getPublicArticle(slug: string, options: { trackView?: boolean; revalidate?: number } = {}) {

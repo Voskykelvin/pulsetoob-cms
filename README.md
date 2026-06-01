@@ -37,6 +37,7 @@ PORT=5000
 NODE_ENV=development
 DATABASE_URL=your_neon_postgres_connection_string
 JWT_SECRET=your_secure_jwt_secret
+JWT_REFRESH_SECRET=your_separate_secure_refresh_secret
 FRONTEND_URL=http://localhost:3000
 ```
 
@@ -78,14 +79,17 @@ Check the API health endpoint:
 
 ```txt
 http://localhost:5000/health
+http://localhost:5000/ready
 ```
+
+Expected `/health` response means the Node process is alive. Expected `/ready` response means the database is connected and API routes can serve traffic.
 
 Expected backend logs:
 
 ```txt
+PulseToob Server running on port 5000
 Database connected successfully
 Database synced
-PulseToob Server running on port 5000
 ```
 
 ### Frontend
@@ -136,6 +140,7 @@ Required Render environment variables:
 NODE_ENV=production
 DATABASE_URL=your_neon_postgres_connection_string
 JWT_SECRET=your_secure_jwt_secret
+JWT_REFRESH_SECRET=your_separate_secure_refresh_secret
 FRONTEND_URL=https://www.pulsetoob.com,https://pulsetoob.com,https://pulsetoob-cms-of3z.vercel.app
 ```
 
@@ -254,6 +259,37 @@ postgresql://...
 
 Neon requires SSL, and the backend is configured for SSL when `DATABASE_URL` is present.
 
+### Backend Health Times Out
+
+If `https://pulsetoob-cms.onrender.com/health` times out, the frontend cannot fetch articles or authenticate admins. This is not an article-route 404; the public article page may only be showing a fallback because the API did not answer.
+
+Fix:
+
+- Check Render logs for database connection or startup errors.
+- Confirm Render has `DATABASE_URL`, `JWT_SECRET`, and `JWT_REFRESH_SECRET`.
+- Confirm the Neon connection string is current and starts with `postgres://` or `postgresql://`.
+- Visit `/health` for process liveness and `/ready` for database readiness.
+- Use the pooled Neon connection string for production traffic when possible.
+
+### Traffic Surge Or Rate Limit
+
+The backend uses rate limits to protect the API. In production it trusts Render's proxy headers so limits are applied to the real visitor IP instead of grouping all traffic behind the Render proxy.
+
+If traffic spikes:
+
+- A real rate-limit event returns HTTP `429` with a JSON error code, not a frontend 404.
+- Article pages should only show 404 when the article API returns 404.
+- Check Render metrics, Neon metrics, and response status codes before assuming an article was deleted.
+
+### Login Fails With `Login failed`
+
+If the username and password are correct but login fails:
+
+- Visit `https://pulsetoob-cms.onrender.com/ready`.
+- If `/ready` returns `503`, wait for the database connection to recover or inspect Render and Neon logs.
+- Confirm `JWT_REFRESH_SECRET` exists in Render. Without it, refresh-token signing falls back to `JWT_SECRET`, but production should use a separate value.
+- Confirm the user exists in the Neon database and `isActive` is true.
+
 ### Git Push Fails With SSH Permission Error
 
 Example:
@@ -285,6 +321,7 @@ npm run build
 After deploying:
 
 - Visit `https://pulsetoob-cms.onrender.com/health`
+- Visit `https://pulsetoob-cms.onrender.com/ready`
 - Visit `https://www.pulsetoob.com`
 - Login at `https://www.pulsetoob.com/login`
 - Open the admin dashboard
@@ -309,7 +346,7 @@ Render and Vercel are configured to redeploy from `main` after a successful push
 - Never commit `.env` files.
 - Never post live database URLs publicly.
 - Rotate exposed Neon passwords immediately.
-- Use strong `JWT_SECRET` values in production.
+- Use strong, separate `JWT_SECRET` and `JWT_REFRESH_SECRET` values in production.
 - Keep backend CORS restricted to trusted domains.
 
 ## Current Production Stack

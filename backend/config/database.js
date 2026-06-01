@@ -1,14 +1,29 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+const DEFAULT_CONNECTION_TIMEOUT_MS = 10000;
+const parsedConnectionTimeoutMs = Number.parseInt(
+  process.env.DB_CONNECTION_TIMEOUT_MS || String(DEFAULT_CONNECTION_TIMEOUT_MS),
+  10
+);
+const connectionTimeoutMs = Number.isFinite(parsedConnectionTimeoutMs) && parsedConnectionTimeoutMs > 0
+  ? parsedConnectionTimeoutMs
+  : DEFAULT_CONNECTION_TIMEOUT_MS;
+const parsedPoolMax = Number.parseInt(process.env.DB_POOL_MAX || '20', 10);
+const poolMax = Number.isFinite(parsedPoolMax) && parsedPoolMax > 0 ? parsedPoolMax : 20;
+
 const commonOptions = {
   dialect: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
-    max: 20,
+    max: poolMax,
     min: 0,
     acquire: 60000,
     idle: 10000,
+  },
+  dialectOptions: {
+    connectTimeout: connectionTimeoutMs,
+    connectionTimeoutMillis: connectionTimeoutMs,
   },
   define: {
     timestamps: true,
@@ -16,14 +31,22 @@ const commonOptions = {
   },
 };
 
-const sslOptions = {
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
+function buildOptions({ ssl = false } = {}) {
+  return {
+    ...commonOptions,
+    dialectOptions: {
+      ...commonOptions.dialectOptions,
+      ...(ssl
+        ? {
+            ssl: {
+              require: true,
+              rejectUnauthorized: false,
+            },
+          }
+        : {}),
     },
-  },
-};
+  };
+}
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 const hasValidDatabaseUrl = databaseUrl && /^(postgres|postgresql):\/\//.test(databaseUrl);
@@ -42,19 +65,15 @@ if (!databaseUrl && missingFallbackVars.length > 0) {
 }
 
 const sequelize = hasValidDatabaseUrl
-  ? new Sequelize(databaseUrl, {
-      ...commonOptions,
-      ...sslOptions,
-    })
+  ? new Sequelize(databaseUrl, buildOptions({ ssl: true }))
   : new Sequelize(
       process.env.DB_NAME,
       process.env.DB_USER,
       process.env.DB_PASSWORD,
       {
-        ...commonOptions,
+        ...buildOptions({ ssl: process.env.DB_SSL === 'true' }),
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
-        ...(process.env.DB_SSL === 'true' ? sslOptions : {}),
       }
     );
 

@@ -2,6 +2,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { User } = require('../models');
 const { Op } = require('sequelize');
+const {
+  accessTokenSecret,
+  refreshTokenSecret,
+  accessTokenExpiresIn,
+  refreshTokenExpiresIn,
+} = require('../config/auth');
 
 class AuthController {
   async register(req, res) {
@@ -94,7 +100,7 @@ class AuthController {
       const { refreshToken } = req.body;
       if (!refreshToken) return res.status(400).json({ error: 'Refresh token required' });
 
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+      const decoded = jwt.verify(refreshToken, refreshTokenSecret);
       const user = await User.findByPk(decoded.userId);
 
       if (!user || user.refreshToken !== refreshToken) {
@@ -233,16 +239,16 @@ class AuthController {
   generateAccessToken(user) {
     return jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      accessTokenSecret,
+      { expiresIn: accessTokenExpiresIn }
     );
   }
 
   generateRefreshToken(user) {
     return jwt.sign(
       { userId: user.id },
-      process.env.JWT_REFRESH_SECRET,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d' }
+      refreshTokenSecret,
+      { expiresIn: refreshTokenExpiresIn }
     );
   }
 }
