@@ -71,7 +71,17 @@ const editorStyles = `
   .ProseMirror h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
 `
 
-function MenuBar({ editor }: { editor: any }) {
+function MenuBar({
+  editor,
+  isFixed,
+  toolbarRef,
+  fixedStyle,
+}: {
+  editor: any
+  isFixed: boolean
+  toolbarRef: React.RefObject<HTMLDivElement>
+  fixedStyle?: React.CSSProperties
+}) {
   const [showLinkInput, setShowLinkInput] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -169,7 +179,13 @@ function MenuBar({ editor }: { editor: any }) {
   const btnStyle = (active: boolean) => `${baseClass} ${active ? activeClass : inactiveClass}`
 
   return (
-    <div className="sticky top-16 z-30 flex flex-wrap items-center gap-1.5 p-2 border-b border-gray-200 bg-gray-50 rounded-t-xl shadow-sm">
+    <div
+      ref={toolbarRef}
+      style={fixedStyle}
+      className={`flex flex-wrap items-center gap-1.5 border-b border-gray-200 bg-gray-50 p-2 shadow-sm ${
+        isFixed ? 'fixed z-40 border-x border-gray-200 rounded-none' : 'rounded-t-xl'
+      }`}
+    >
       {/* Dropdown for Headers */}
       <select
         onChange={(e) => {
@@ -404,6 +420,15 @@ interface RichEditorProps {
 }
 
 export default function RichEditor({ content, onChange, placeholder }: RichEditorProps) {
+  const editorFrameRef = useRef<HTMLDivElement>(null)
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [toolbarState, setToolbarState] = useState({
+    fixed: false,
+    left: 0,
+    width: 0,
+    height: 0,
+  })
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -434,11 +459,83 @@ export default function RichEditor({ content, onChange, placeholder }: RichEdito
   }, [content, editor])
 
   const wordCount = editor ? editor.state.doc.textContent.split(/\s+/).filter(w => w.length > 0).length : 0
+  const toolbarTopOffset = 64
+
+  useEffect(() => {
+    let rafId = 0
+
+    const applyToolbarPosition = () => {
+      const frame = editorFrameRef.current
+      const toolbar = toolbarRef.current
+
+      if (!frame || !toolbar) return
+
+      const frameRect = frame.getBoundingClientRect()
+      const toolbarHeight = toolbar.offsetHeight
+      const shouldFix =
+        frameRect.top <= toolbarTopOffset &&
+        frameRect.bottom - toolbarHeight > toolbarTopOffset
+
+      const nextState = {
+        fixed: shouldFix,
+        left: shouldFix ? frameRect.left : 0,
+        width: shouldFix ? frameRect.width : 0,
+        height: toolbarHeight,
+      }
+
+      setToolbarState((current) => {
+        if (
+          current.fixed === nextState.fixed &&
+          Math.round(current.left) === Math.round(nextState.left) &&
+          Math.round(current.width) === Math.round(nextState.width) &&
+          current.height === nextState.height
+        ) {
+          return current
+        }
+
+        return nextState
+      })
+    }
+
+    const scheduleToolbarPosition = () => {
+      window.cancelAnimationFrame(rafId)
+      rafId = window.requestAnimationFrame(applyToolbarPosition)
+    }
+
+    scheduleToolbarPosition()
+    window.addEventListener('scroll', scheduleToolbarPosition, true)
+    window.addEventListener('resize', scheduleToolbarPosition)
+
+    const resizeObserver = new ResizeObserver(scheduleToolbarPosition)
+    if (editorFrameRef.current) resizeObserver.observe(editorFrameRef.current)
+    if (toolbarRef.current) resizeObserver.observe(toolbarRef.current)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('scroll', scheduleToolbarPosition, true)
+      window.removeEventListener('resize', scheduleToolbarPosition)
+      resizeObserver.disconnect()
+    }
+  }, [editor])
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-sm">
+    <div ref={editorFrameRef} className="border border-gray-200 rounded-xl bg-white shadow-sm">
       <style dangerouslySetInnerHTML={{ __html: editorStyles }} />
-      <MenuBar editor={editor} />
+      {toolbarState.fixed && <div style={{ height: toolbarState.height }} />}
+      <MenuBar
+        editor={editor}
+        isFixed={toolbarState.fixed}
+        toolbarRef={toolbarRef}
+        fixedStyle={
+          toolbarState.fixed
+            ? {
+                left: toolbarState.left,
+                top: toolbarTopOffset,
+                width: toolbarState.width,
+              }
+            : undefined
+        }
+      />
       <div className="bg-white min-h-[400px]">
         <EditorContent editor={editor} />
       </div>
