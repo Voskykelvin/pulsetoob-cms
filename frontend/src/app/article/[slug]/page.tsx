@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdSlot from '@/components/AdSlot'
 import ArticleViewTracker from '@/components/ArticleViewTracker'
+import RelatedPosts from '@/components/RelatedPosts'
+import ShareButtons from '@/components/ShareButtons'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
 import { getAuthorInitials, getAuthorName } from '@/utils/author'
 import { renderArticleContent } from '@/utils/articleContent'
@@ -12,6 +14,7 @@ import {
   getFeaturedImageAlt,
   getFeaturedImageUrl,
   getPublicArticle,
+  getRelatedArticles,
   getSiteUrl,
   type PublicArticle,
 } from '@/lib/publicContent'
@@ -184,6 +187,9 @@ export default async function ArticlePage({
   if (!article) notFound()
 
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
+  const articleUrl = getArticleUrl(article)
+  const articleDescription = getArticleDescription(article)
+  const relatedArticles = await getRelatedArticles(article.id, { limit: 3 })
   const schema = getArticleSchema(article)
 
   return (
@@ -283,6 +289,15 @@ export default async function ArticlePage({
               ))}
             </div>
           ) : null}
+
+          <ShareButtons
+            articleId={article.id}
+            title={article.title}
+            url={articleUrl}
+            description={articleDescription}
+          />
+
+          <RelatedPosts articles={relatedArticles} />
         </main>
       </div>
 

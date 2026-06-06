@@ -39,6 +39,8 @@ interface ArticleListResponse extends ApiResponse<PublicArticle[]> {
   pagination?: Pagination
 }
 
+type RelatedArticlesResponse = ApiResponse<PublicArticle[]>
+
 const API_URL = getApiBaseUrl()
 const REQUEST_TIMEOUT_MS = 7000
 const PUBLIC_CONTENT_REVALIDATE_SECONDS = 60
@@ -131,6 +133,19 @@ export async function getPublicArticle(slug: string, options: { trackView?: bool
   )
 
   return result?.success ? result.data : null
+}
+
+export async function getRelatedArticles(articleId: string, options: { limit?: number } = {}) {
+  if (!articleId) return []
+
+  try {
+    const result = await fetchJson<RelatedArticlesResponse>(`/articles/${encodeURIComponent(articleId)}/related`)
+    const articles = result?.success ? result.data : []
+    return typeof options.limit === 'number' ? articles.slice(0, options.limit) : articles
+  } catch (error) {
+    console.error('Failed to load related articles', error)
+    return []
+  }
 }
 
 export function getArticleUrl(article: Pick<PublicArticle, 'slug'>) {
