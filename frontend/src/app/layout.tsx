@@ -37,6 +37,11 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <Script
+          id="secureprivacy-banner"
+          src="https://app.secureprivacy.ai/script/6a427b4c50650fd51e3e920f.js"
+          strategy="beforeInteractive"
+        />
+        <Script
           async
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
           strategy="afterInteractive"
