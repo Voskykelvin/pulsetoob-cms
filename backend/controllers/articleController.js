@@ -42,6 +42,25 @@ function pickArticleUpdates(body) {
   }, {});
 }
 
+async function recalculateCategoryArticleCounts(categoryIds, transaction) {
+  const uniqueIds = [...new Set((categoryIds || []).filter(Boolean))];
+
+  for (const categoryId of uniqueIds) {
+    const articleCount = await Article.count({
+      include: [{
+        model: Category,
+        as: 'categories',
+        where: { id: categoryId },
+        attributes: [],
+        through: { attributes: [] },
+      }],
+      transaction,
+    });
+
+    await Category.update({ articleCount }, { where: { id: categoryId }, transaction });
+  }
+}
+
 class ArticleController {
   async create(req, res) {
     const transaction = await sequelize.transaction();
@@ -93,7 +112,7 @@ class ArticleController {
 
       if (categoryIds && categoryIds.length > 0) {
         await article.setCategories(categoryIds, { transaction });
-        await Category.increment('articleCount', { where: { id: categoryIds }, transaction });
+        await recalculateCategoryArticleCounts(categoryIds, transaction);
       }
 
       if (tagNames && tagNames.length > 0) {
@@ -140,6 +159,13 @@ class ArticleController {
       }
 
       const updates = pickArticleUpdates(req.body);
+      const hasCategoryUpdates = Object.prototype.hasOwnProperty.call(req.body, 'categoryIds');
+      const hasTagUpdates = Object.prototype.hasOwnProperty.call(req.body, 'tagNames');
+      const categoryIds = hasCategoryUpdates ? req.body.categoryIds : undefined;
+      const tagNames = hasTagUpdates ? req.body.tagNames : undefined;
+      const previousCategories = hasCategoryUpdates
+        ? await article.getCategories({ attributes: ['id'], transaction })
+        : [];
 
       if (Object.prototype.hasOwnProperty.call(req.body, 'section')) {
         updates.customFields = {
@@ -178,13 +204,17 @@ class ArticleController {
 
       await article.update(updates, { transaction });
 
-      if (updates.categoryIds) {
-        await article.setCategories(updates.categoryIds, { transaction });
+      if (hasCategoryUpdates) {
+        await article.setCategories(categoryIds || [], { transaction });
+        await recalculateCategoryArticleCounts([
+          ...previousCategories.map(category => category.id),
+          ...(categoryIds || []),
+        ], transaction);
       }
 
-      if (updates.tagNames) {
+      if (hasTagUpdates) {
         const tags = [];
-        for (const tagName of updates.tagNames) {
+        for (const tagName of tagNames || []) {
           const tagSlug = slugify(tagName, { lower: true, strict: true });
           const [tag] = await Tag.findOrCreate({ where: { slug: tagSlug }, defaults: { name: tagName, slug: tagSlug }, transaction });
           tags.push(tag);

@@ -2,6 +2,29 @@ const { Category, Article, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const slugify = require('slugify');
 
+async function getCategoryArticleCount(categoryId) {
+  return Article.count({
+    include: [{
+      model: Category,
+      as: 'categories',
+      where: { id: categoryId },
+      attributes: [],
+      through: { attributes: [] },
+    }],
+  });
+}
+
+async function attachArticleCounts(categories) {
+  for (const category of categories) {
+    category.setDataValue('articleCount', await getCategoryArticleCount(category.id));
+
+    const subcategories = category.subcategories || [];
+    if (subcategories.length > 0) {
+      await attachArticleCounts(subcategories);
+    }
+  }
+}
+
 class CategoryController {
   async getAllCategories(req, res) {
     try {
@@ -24,6 +47,8 @@ class CategoryController {
           }],
         });
       }
+
+      await attachArticleCounts(categories);
 
       res.json({ success: true, data: categories, total: categories.length });
     } catch (error) {
@@ -189,6 +214,8 @@ class CategoryController {
         where: { isActive: true },
         order: [['articleCount', 'DESC']],
       });
+      await attachArticleCounts(categories);
+      categories.sort((a, b) => b.articleCount - a.articleCount);
       res.json({ success: true, data: categories });
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch category stats' });
