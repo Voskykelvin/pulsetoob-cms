@@ -21,6 +21,8 @@ export default function ContactPage() {
           </Link>
           <div className="flex items-center gap-5 text-sm font-medium text-gray-600">
             <Link href="/blog" className="hover:text-gray-950">All Stories</Link>
+            <Link href="/search" className="hover:text-gray-950">Search</Link>
+            <Link href="/privacy" className="hover:text-gray-950">Privacy</Link>
             <Link href="/contact" className="text-green-700">Contact</Link>
           </div>
         </div>

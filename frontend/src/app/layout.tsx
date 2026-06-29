@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import SiteAnalyticsTracker from '@/components/SiteAnalyticsTracker'
+import ToastProvider from '@/components/ToastProvider'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
 import './globals.css'
 
@@ -62,6 +63,7 @@ export default function RootLayout({
       </head>
       <body>
         <SiteAnalyticsTracker />
+        <ToastProvider />
         {children}
       </body>
     </html>

@@ -26,6 +26,9 @@ export interface PublicArticle {
   readTime?: number | null
   wordCount?: number | null
   status?: string
+  isFeatured?: boolean
+  isBreaking?: boolean
+  isPinned?: boolean
   createdAt?: string
   updatedAt?: string | null
   publishedAt?: string | null
@@ -93,7 +96,7 @@ async function fetchJson<T>(
   }
 }
 
-export async function getPublicArticles(options: { limit?: number; category?: string } = {}) {
+export async function getPublicArticles(options: { limit?: number; category?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
   const params = new URLSearchParams({
     limit: String(options.limit || 12),
     status: 'published',
@@ -102,6 +105,10 @@ export async function getPublicArticles(options: { limit?: number; category?: st
   })
 
   if (options.category) params.set('category', options.category)
+  if (options.search) params.set('search', options.search)
+  if (typeof options.featured === 'boolean') params.set('featured', String(options.featured))
+  if (typeof options.breaking === 'boolean') params.set('breaking', String(options.breaking))
+  if (typeof options.pinned === 'boolean') params.set('pinned', String(options.pinned))
 
   try {
     const result = await fetchJson<ArticleListResponse>(`/articles?${params.toString()}`)

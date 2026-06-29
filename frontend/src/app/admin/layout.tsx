@@ -43,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const menuItems = [
     { label: 'Dashboard', href: '/admin' },
+    { label: 'Homepage', href: '/admin/homepage' },
     { label: 'Articles', href: '/admin/articles' },
     { label: 'Categories', href: '/admin/categories' },
     { label: 'Media', href: '/admin/media' },

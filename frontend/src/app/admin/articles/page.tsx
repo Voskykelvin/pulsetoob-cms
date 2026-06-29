@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 import StatusBadge from '@/components/admin/StatusBadge'
+import { getApiErrorMessage } from '@/utils/apiError'
 import type { ApiResponse, Article, ArticleStatus, Pagination } from '@/types/cms'
 
 const EMPTY_PAGINATION: Pagination = {
@@ -55,18 +57,20 @@ export default function ArticlesPage() {
     if (!confirm('Delete this article?')) return
     try { 
       await api.delete(`/articles/${id}`)
+      toast.success('Article deleted')
       fetchArticles() 
     } catch (err) { 
-      alert('Delete failed') 
+      toast.error(getApiErrorMessage(err, 'Delete failed'))
     }
   }
 
   const handlePublish = async (id: string) => {
     try { 
       await api.post(`/articles/${id}/publish`)
+      toast.success('Article published')
       fetchArticles() 
     } catch (err) { 
-      alert('Publish failed') 
+      toast.error(getApiErrorMessage(err, 'Publish failed'))
     }
   }
 

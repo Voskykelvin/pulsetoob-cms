@@ -53,6 +53,10 @@ class ArticleController {
         template: template || 'default',
       }, { transaction });
 
+      if (article.isPinned && article.status === 'published') {
+        await Article.update({ isPinned: false }, { where: { id: { [Op.ne]: article.id } }, transaction });
+      }
+
       if (categoryIds && categoryIds.length > 0) {
         await article.setCategories(categoryIds, { transaction });
         await Category.increment('articleCount', { where: { id: categoryIds }, transaction });
@@ -126,6 +130,10 @@ class ArticleController {
       const revision = { version: article.version, title: article.title, modifiedBy: req.userId, modifiedAt: new Date() };
       updates.revisionHistory = [...(article.revisionHistory || []), revision].slice(-10);
       updates.version = article.version + 1;
+
+      if (updates.isPinned === true && (updates.status === 'published' || article.status === 'published')) {
+        await Article.update({ isPinned: false }, { where: { id: { [Op.ne]: id } }, transaction });
+      }
 
       await article.update(updates, { transaction });
 
@@ -201,7 +209,7 @@ class ArticleController {
     try {
       const { page = 1, limit = 12, category, tag, author, status,
         search, sortBy = 'publishedAt', sortOrder = 'DESC',
-        featured, breaking } = req.query;
+        featured, breaking, pinned } = req.query;
 
       const pageNumber = parseInt(page, 10);
       const pageSize = parseInt(limit, 10);
@@ -235,6 +243,7 @@ class ArticleController {
       if (author) where.authorId = author;
       if (featured === 'true') where.isFeatured = true;
       if (breaking === 'true') where.isBreaking = true;
+      if (pinned === 'true') where.isPinned = true;
 
       if (search) {
         where[Op.or] = [
@@ -306,6 +315,9 @@ class ArticleController {
     try {
       const article = await Article.findByPk(req.params.id);
       if (!article) return sendError(res, { status: 404, message: 'Article not found' });
+      if (article.isPinned) {
+        await Article.update({ isPinned: false }, { where: { id: { [Op.ne]: article.id } } });
+      }
       await article.update({ status: 'published', publishedAt: new Date() });
       return sendSuccess(res, { data: article, message: 'Article published successfully' });
     } catch (error) {

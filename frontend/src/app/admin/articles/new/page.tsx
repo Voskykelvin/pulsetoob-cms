@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import dynamic from 'next/dynamic'
+import toast from 'react-hot-toast'
 import SeoPanel from '@/components/editor/SeoPanel'
+import MediaPickerModal from '@/components/editor/MediaPickerModal'
 import { renderArticleContent } from '@/utils/articleContent'
 import { getApiErrorMessage } from '@/utils/apiError'
 import { parseMetaKeywords } from '@/utils/articleForm'
@@ -90,6 +92,7 @@ export default function NewArticlePage() {
   const [uploadingFeatured, setUploadingFeatured] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
+  const [showFeaturedImagePicker, setShowFeaturedImagePicker] = useState(false)
   
   // Isolated State: Keeping the featured image object completely safe from form edits
   const [featuredImage, setFeaturedImage] = useState<any>(null)
@@ -103,6 +106,7 @@ export default function NewArticlePage() {
     metaKeywords: '',
     categoryIds: [] as string[],
     isFeatured: false,
+    isPinned: false,
     isBreaking: false,
     rssIncluded: true,
     section: ''
@@ -167,9 +171,10 @@ export default function NewArticlePage() {
       })
       if (res.data.success) {
         setFeaturedImage(res.data.data) // Store the entire Media object safely
+        toast.success('Featured image uploaded')
       }
     } catch (err) {
-      alert('Featured image upload failed')
+      toast.error('Featured image upload failed')
     } finally {
       setUploadingFeatured(false)
     }
@@ -184,8 +189,8 @@ export default function NewArticlePage() {
   }
 
   const handleSubmit = async (status: 'draft' | 'published') => {
-    if (!form.title.trim()) return alert('Title is required')
-    if (!form.content.trim()) return alert('Content is required')
+    if (!form.title.trim()) return toast.error('Title is required')
+    if (!form.content.trim()) return toast.error('Content is required')
     setSaving(true)
     try {
       await saveFeaturedImageMetadata()
@@ -200,11 +205,11 @@ export default function NewArticlePage() {
       if (res.data.success) {
         localStorage.removeItem('pulse_article_draft')
         localStorage.removeItem('pulse_article_draft_image')
-        alert(status === 'published' ? 'Article published!' : 'Article saved as draft!')
+        toast.success(status === 'published' ? 'Article published' : 'Article saved as draft')
         router.push('/admin/articles')
       }
     } catch (err: any) {
-      alert(getApiErrorMessage(err, 'Failed to save article'))
+      toast.error(getApiErrorMessage(err, 'Failed to save article'))
     } finally {
       setSaving(false)
     }
@@ -430,23 +435,32 @@ export default function NewArticlePage() {
                   </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => featuredImageInputRef.current?.click()}
-                  disabled={uploadingFeatured}
-                  className="w-full h-36 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-gray-50 transition text-gray-500 bg-white"
-                >
-                  {uploadingFeatured ? (
-                    <span className="text-xs font-medium">Uploading image...</span>
-                  ) : (
-                    <>
-                      <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-xs font-semibold">Upload Featured Image</span>
-                    </>
-                  )}
-                </button>
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => featuredImageInputRef.current?.click()}
+                    disabled={uploadingFeatured}
+                    className="w-full h-28 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-gray-50 transition text-gray-500 bg-white"
+                  >
+                    {uploadingFeatured ? (
+                      <span className="text-xs font-medium">Uploading image...</span>
+                    ) : (
+                      <>
+                        <svg className="w-7 h-7 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-xs font-semibold">Upload Featured Image</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFeaturedImagePicker(true)}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                  >
+                    Choose from Media Library
+                  </button>
+                </div>
               )}
               <input
                 type="file"
@@ -455,6 +469,24 @@ export default function NewArticlePage() {
                 accept="image/*"
                 className="hidden"
               />
+              {featuredImage?.url && (
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => featuredImageInputRef.current?.click()}
+                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                  >
+                    Upload Different Image
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowFeaturedImagePicker(true)}
+                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 hover:bg-gray-50"
+                  >
+                    Choose from Library
+                  </button>
+                </div>
+              )}
               {featuredImage?.url ? (
                 <div className="mt-4 space-y-3">
                   <label className="block text-xs font-semibold text-gray-700">
@@ -515,6 +547,15 @@ export default function NewArticlePage() {
                     onChange={(e) => setForm(prev => ({ ...prev, isFeatured: e.target.checked }))}
                   />
                   <span>Set as Featured Article</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded text-green-600 border-gray-300 focus:ring-green-500"
+                    checked={form.isPinned}
+                    onChange={(e) => setForm(prev => ({ ...prev, isPinned: e.target.checked }))}
+                  />
+                  <span>Keep as Homepage Lead</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer text-sm font-medium text-gray-700">
                   <input
@@ -586,6 +627,17 @@ export default function NewArticlePage() {
             </div>
           </div>
         </div>
+      )}
+      {showFeaturedImagePicker && (
+        <MediaPickerModal
+          title="Choose Featured Image"
+          onClose={() => setShowFeaturedImagePicker(false)}
+          onSelect={(asset) => {
+            setFeaturedImage(asset)
+            setShowFeaturedImagePicker(false)
+            toast.success('Featured image selected')
+          }}
+        />
       )}
     </div>
   )

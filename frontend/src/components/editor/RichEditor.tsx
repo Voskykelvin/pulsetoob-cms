@@ -7,7 +7,10 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useState, useRef, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import api from '@/lib/api'
+import MediaPickerModal from '@/components/editor/MediaPickerModal'
+import type { MediaAsset } from '@/types/cms'
 
 // CSS Styles to ensure lists, headers, and spacing display correctly inside Tiptap's clean canvas
 const editorStyles = `
@@ -83,6 +86,7 @@ function MenuBar({
   fixedStyle?: React.CSSProperties
 }) {
   const [showLinkInput, setShowLinkInput] = useState(false)
+  const [showMediaPicker, setShowMediaPicker] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -137,9 +141,19 @@ function MenuBar({
         }).run()
       }
     } catch (err) {
-      alert('Image upload failed')
+      toast.error('Image upload failed')
     }
     e.target.value = ''
+  }
+
+  const insertMediaAsset = (asset: MediaAsset) => {
+    editor.chain().focus().setImage({
+      src: asset.url,
+      alt: asset.altText || asset.title || asset.originalName || '',
+      title: asset.caption || undefined,
+    }).run()
+    setShowMediaPicker(false)
+    toast.success('Image inserted')
   }
 
   const addImageUrl = () => {
@@ -159,7 +173,7 @@ function MenuBar({
   const editSelectedImage = () => {
     const attrs = editor.getAttributes('image')
     if (!attrs.src) {
-      alert('Select an image in the editor first.')
+      toast.error('Select an image in the editor first.')
       return
     }
 
@@ -380,6 +394,14 @@ function MenuBar({
       </button>
       <button
         type="button"
+        onClick={() => setShowMediaPicker(true)}
+        className={btnStyle(false)}
+        title="Choose from Media Library"
+      >
+        <span className="text-xs font-bold">Library</span>
+      </button>
+      <button
+        type="button"
         onClick={editSelectedImage}
         disabled={!editor.isActive('image')}
         className={`${btnStyle(editor.isActive('image'))} disabled:opacity-30`}
@@ -409,6 +431,13 @@ function MenuBar({
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.934 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.334-4z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z" /></svg>
       </button>
+      {showMediaPicker && (
+        <MediaPickerModal
+          title="Insert Image"
+          onClose={() => setShowMediaPicker(false)}
+          onSelect={insertMediaAsset}
+        />
+      )}
     </div>
   )
 }

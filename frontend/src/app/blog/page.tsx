@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { getAuthorName } from '@/utils/author'
+import PublicArticleCard from '@/components/PublicArticleCard'
 import {
-  getFeaturedImageAlt,
-  getFeaturedImageUrl,
   getPublicArticles,
   getPublicCategories,
 } from '@/lib/publicContent'
@@ -20,23 +18,6 @@ export const metadata: Metadata = {
     url: '/blog',
     type: 'website',
   },
-}
-
-const catThemes: Record<string, { text: string; bg: string }> = {
-  movies: { text: 'text-purple-700', bg: 'bg-purple-50' },
-  lifestyle: { text: 'text-emerald-700', bg: 'bg-emerald-50' },
-  tech: { text: 'text-blue-700', bg: 'bg-blue-50' },
-  technology: { text: 'text-blue-700', bg: 'bg-blue-50' },
-  food: { text: 'text-amber-700', bg: 'bg-amber-50' },
-  travel: { text: 'text-teal-700', bg: 'bg-teal-50' },
-  entertainment: { text: 'text-purple-700', bg: 'bg-purple-50' },
-  sports: { text: 'text-sky-700', bg: 'bg-sky-50' },
-  business: { text: 'text-indigo-700', bg: 'bg-indigo-50' },
-}
-
-function getCatTheme(name?: string | null) {
-  const key = name?.toLowerCase().replace(/[^a-z]/g, '') || 'news'
-  return catThemes[key] || { text: 'text-slate-700', bg: 'bg-slate-100' }
 }
 
 export default async function BlogPage({
@@ -63,6 +44,9 @@ export default async function BlogPage({
             <div className="flex items-center gap-5">
               <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Home
+              </Link>
+              <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                Search
               </Link>
               <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Contact
@@ -94,7 +78,7 @@ export default async function BlogPage({
           {categories.map((cat) => (
             <Link
               key={cat.id}
-              href={`/blog?category=${cat.slug}`}
+              href={`/category/${cat.slug}`}
               className={`px-4 py-1.5 rounded-full text-xs font-bold border transition ${
                 activeFilter === cat.slug
                   ? 'bg-green-700 text-white border-transparent shadow-sm'
@@ -112,38 +96,7 @@ export default async function BlogPage({
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {articles.map((article) => (
-                <article key={article.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm flex flex-col h-full hover:shadow transition duration-150">
-                  <div className="h-44 bg-gray-100 relative">
-                    {getFeaturedImageUrl(article.featuredImage) ? (
-                      <img
-                        src={getFeaturedImageUrl(article.featuredImage) || ''}
-                        alt={getFeaturedImageAlt(article)}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center p-4 bg-gray-100 text-center text-gray-400 text-xs font-semibold">
-                        {article.title}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-5 flex flex-col justify-between flex-grow space-y-3">
-                    <div className="space-y-2">
-                      {article.categories?.[0] && (
-                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getCatTheme(article.categories[0].name).bg} ${getCatTheme(article.categories[0].name).text}`}>
-                          {article.categories[0].name}
-                        </span>
-                      )}
-                      <h2 className="font-bold text-gray-900 line-clamp-2 hover:underline">
-                        <Link href={`/article/${article.slug}`}>{article.title}</Link>
-                      </h2>
-                      <p className="text-xs text-gray-500 line-clamp-2">{article.excerpt}</p>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 border-t border-gray-100 pt-3">
-                      <span>{getAuthorName(article.author)}</span>
-                      <span>{article.readTime || 5} min</span>
-                    </div>
-                  </div>
-                </article>
+                <PublicArticleCard key={article.id} article={article} />
               ))}
             </div>
           )}
@@ -152,6 +105,7 @@ export default async function BlogPage({
 
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20 space-x-4">
         <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
+        <Link href="/privacy" className="text-gray-500 hover:underline">Privacy</Link>
         <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
       </footer>
     </div>

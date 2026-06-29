@@ -69,6 +69,9 @@ export interface Article {
   updatedAt?: string
   publishedAt?: string | null
   scheduledFor?: string | null
+  isFeatured?: boolean
+  isPinned?: boolean
+  isBreaking?: boolean
   author?: UserSummary
   categories?: Category[]
   featuredImage?: MediaAsset | null

@@ -1,13 +1,19 @@
 # PulseToob CMS
 
-PulseToob is a full-stack content management system built with a Next.js frontend, an Express backend, Sequelize, and PostgreSQL. This guide documents the deployment process used for the live PulseToob setup.
+PulseToob is a live full-stack publishing platform and CMS for `pulsetoob.com`. It is built with a Next.js frontend, an Express backend, Sequelize, and PostgreSQL, with production deployment split between Vercel and Render.
+
+For the broader product and operational overview, see `docs/PULSETOOB_OVERVIEW.md`.
 
 ## Live Services
 
-- Frontend: Vercel
-- Backend API: Render
-- Database: Neon PostgreSQL
 - Production domain: `https://www.pulsetoob.com`
+- Frontend: Vercel
+- Backend API: Render at `https://pulsetoob-cms.onrender.com/api`
+- Database: Neon PostgreSQL
+- Media: Cloudinary
+- Analytics: internal analytics plus Google Analytics `G-WSWVPG42ZF`
+- Ads and privacy: Google AdSense plus SecurePrivacy banner script
+- Public discovery: search and dedicated category pages
 
 ## Project Structure
 
@@ -315,10 +321,18 @@ npm run check
 
 ```bash
 cd frontend
+npm run typecheck
 npm run build
 ```
 
-After deploying:
+Run the deployment smoke check after Vercel and Render finish:
+
+```bash
+cd frontend
+npm run smoke:deploy
+```
+
+Manual checks:
 
 - Visit `https://pulsetoob-cms.onrender.com/health`
 - Visit `https://pulsetoob-cms.onrender.com/ready`
@@ -356,6 +370,9 @@ Frontend: Next.js on Vercel
 Backend: Express on Render
 Database: Neon PostgreSQL
 ORM: Sequelize
-Media: Cloudinary-ready media system
+Media: Cloudinary
+Analytics: Internal analytics plus Google Analytics
+Ads: Google AdSense
+Privacy banner: SecurePrivacy
 Domain: pulsetoob.com
 ```

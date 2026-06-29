@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, type ChangeEvent, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import type { AxiosError } from 'axios'
+import toast from 'react-hot-toast'
 import api from '@/lib/api'
 import type { ApiResponse, MediaAsset } from '@/types/cms'
 
@@ -84,9 +85,10 @@ export default function MediaPage() {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
       }
+      toast.success(files.length === 1 ? 'File uploaded' : `${files.length} files uploaded`)
       fetchMedia()
     } catch (err) {
-      alert('Upload failed')
+      toast.error('Upload failed')
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -115,11 +117,12 @@ export default function MediaPage() {
       const res = await api.put<ApiResponse<MediaAsset>>(`/media/${editing.id}`, form)
       if (res.data.success) {
         setEditing(null)
+        toast.success('Media metadata saved')
         fetchMedia()
       }
     } catch (err) {
       const error = err as AxiosError<ApiError>
-      alert(error.response?.data?.error || error.response?.data?.message || 'Update failed')
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Update failed')
     }
   }
 
@@ -127,16 +130,17 @@ export default function MediaPage() {
     if (!confirm('Delete this media item?')) return
     try {
       await api.delete('/media/' + id)
+      toast.success('Media deleted')
       fetchMedia()
     } catch (err) {
       const error = err as AxiosError<ApiError>
-      alert(error.response?.data?.error || error.response?.data?.message || 'Delete failed')
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Delete failed')
     }
   }
 
   const copyToClipboard = (url: string) => {
     navigator.clipboard.writeText(url)
-    alert('URL copied to clipboard')
+    toast.success('URL copied to clipboard')
   }
 
   const formatSize = (bytes?: number) => {

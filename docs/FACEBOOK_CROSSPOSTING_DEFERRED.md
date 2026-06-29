@@ -2,9 +2,9 @@
 
 ## Status
 
-Deferred until PulseToob has a larger publishing rhythm and audience base.
+Deferred as of June 29, 2026.
 
-The first implementation draft is intentionally not deployed yet. Keep Facebook Page tokens out of Git and out of the frontend.
+PulseToob currently has reader share buttons, but it does not have automatic Facebook Page publishing enabled. Keep Facebook Page tokens out of Git and out of the frontend.
 
 ## Target Page
 
@@ -18,9 +18,11 @@ The first implementation draft is intentionally not deployed yet. Keep Facebook 
 - Prevent accidental duplicate posts, with an explicit repost confirmation.
 - Show admin states such as `Post FB`, `Retry FB`, and `Facebook posted`.
 
-## Prepared Draft Files
+## Implementation Areas When Enabled
 
-- `backend/services/facebookService.js`
+When this feature is picked back up, expect work in:
+
+- A new backend Facebook service for Meta Graph API calls.
 - `backend/controllers/articleController.js`
 - `backend/routes/articles.js`
 - `frontend/src/app/admin/articles/page.tsx`

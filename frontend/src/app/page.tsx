@@ -9,6 +9,7 @@ import {
   getFeaturedImageUrl,
   getPublicArticles,
   getPublicCategories,
+  type PublicArticle,
 } from '@/lib/publicContent'
 
 export const revalidate = 60
@@ -27,6 +28,7 @@ export const metadata: Metadata = {
 
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
 const ADSENSE_IN_ARTICLE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT
+const HERO_ROTATION_INTERVAL_MS = 60 * 60 * 1000
 
 const catThemes: Record<string, { text: string; bg: string }> = {
   movies: { text: 'text-purple-700', bg: 'bg-purple-50' },
@@ -48,15 +50,43 @@ function getCatTheme(name?: string | null) {
   return catThemes[key] || { text: 'text-slate-700', bg: 'bg-slate-100' }
 }
 
+function getPublishedTime(article: PublicArticle) {
+  return new Date(article.publishedAt || article.createdAt || 0).getTime() || 0
+}
+
+function newestFirst(articles: PublicArticle[]) {
+  return [...articles].sort((a, b) => getPublishedTime(b) - getPublishedTime(a))
+}
+
+function selectHomepageHero(
+  latestArticles: PublicArticle[],
+  featuredArticles: PublicArticle[],
+  pinnedArticles: PublicArticle[]
+) {
+  const pinnedHero = newestFirst(pinnedArticles).find((article) => article.isPinned)
+  if (pinnedHero) return pinnedHero
+
+  const featuredCandidates = newestFirst(featuredArticles).filter((article) => article.isFeatured)
+  if (featuredCandidates.length > 0) {
+    const rotationIndex = Math.floor(Date.now() / HERO_ROTATION_INTERVAL_MS) % featuredCandidates.length
+    return featuredCandidates[rotationIndex]
+  }
+
+  return latestArticles[0]
+}
+
 export default async function HomePage() {
-  const [articles, categories] = await Promise.all([
+  const [articles, featuredArticles, pinnedArticles, categories] = await Promise.all([
     getPublicArticles({ limit: 12 }),
+    getPublicArticles({ limit: 12, featured: true }),
+    getPublicArticles({ limit: 5, pinned: true }),
     getPublicCategories(),
   ])
 
-  const hero = articles[0]
-  const trending = articles.slice(1, 5)
-  const rest = articles.slice(5)
+  const hero = selectHomepageHero(articles, featuredArticles, pinnedArticles)
+  const visibleArticles = articles.filter((article) => article.id !== hero?.id)
+  const trending = visibleArticles.slice(0, 4)
+  const rest = visibleArticles.slice(4)
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -69,6 +99,9 @@ export default async function HomePage() {
             <div className="flex items-center gap-5">
               <Link href="/blog" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 All Stories
+              </Link>
+              <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                Search
               </Link>
               <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Contact
@@ -86,7 +119,7 @@ export default async function HomePage() {
               {categories.slice(0, 8).map((cat) => (
                 <Link
                   key={cat.id}
-                  href={`/blog?category=${cat.slug}`}
+                  href={`/category/${cat.slug}`}
                   className="px-4 py-1.5 border border-gray-200 text-gray-700 hover:border-gray-900 hover:text-gray-950 rounded-full text-xs font-semibold transition"
                 >
                   {cat.name}
@@ -99,7 +132,7 @@ export default async function HomePage() {
         <AdSlot slot="header_leaderboard" adsenseClient={ADSENSE_CLIENT} adsenseSlot={ADSENSE_HEADER_SLOT} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {articles.length === 0 ? (
+          {!hero ? (
             <div className="text-center py-20 max-w-md mx-auto">
               <h1 className="text-2xl font-extrabold text-gray-900">PulseToob</h1>
               <p className="text-gray-500 text-sm mt-2">
@@ -210,7 +243,7 @@ export default async function HomePage() {
                     {categories.map((cat) => (
                       <Link
                         key={cat.id}
-                        href={`/blog?category=${cat.slug}`}
+                        href={`/category/${cat.slug}`}
                         className={`px-5 py-2.5 rounded-xl text-sm font-bold transition hover:shadow-sm ${getCatTheme(cat.name).bg} ${getCatTheme(cat.name).text}`}
                       >
                         {cat.name}
@@ -266,7 +299,9 @@ export default async function HomePage() {
             <span className="font-semibold text-gray-900">Explore</span>
             <Link href="/" className="hover:underline">Home</Link>
             <Link href="/blog" className="hover:underline">All Stories</Link>
+            <Link href="/search" className="hover:underline">Search</Link>
             <Link href="/contact" className="hover:underline">Contact</Link>
+            <Link href="/privacy" className="hover:underline">Privacy</Link>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-100 py-6 flex flex-col sm:flex-row justify-between text-xs text-gray-400">

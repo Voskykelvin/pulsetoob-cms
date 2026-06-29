@@ -112,6 +112,7 @@ const articleListRules = [
   query('sortOrder').optional().isIn(['ASC', 'DESC', 'asc', 'desc']).withMessage('sortOrder must be ASC or DESC'),
   query('featured').optional().isIn(['true', 'false']).withMessage('featured must be true or false'),
   query('breaking').optional().isIn(['true', 'false']).withMessage('breaking must be true or false'),
+  query('pinned').optional().isIn(['true', 'false']).withMessage('pinned must be true or false'),
 ];
 
 const scheduleRules = [
