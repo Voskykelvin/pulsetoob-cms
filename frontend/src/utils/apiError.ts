@@ -5,7 +5,8 @@ interface ApiValidationDetail {
 
 export function getApiErrorMessage(error: any, fallback: string) {
   const data = error?.response?.data
-  const title = data?.error || data?.message || fallback
+  const errorTitle = typeof data?.error === 'string' ? data.error : data?.error?.message
+  const title = errorTitle || data?.message || error?.message || fallback
   const details = Array.isArray(data?.details) ? data.details : []
   const issues = Array.isArray(data?.issues) ? data.issues : []
 

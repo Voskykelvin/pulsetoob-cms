@@ -161,7 +161,10 @@ app.use('/api/ads', adRoutes);
 app.use('/api/public', publicRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
-app.use((err, req, res, next) => res.status(err.statusCode || 500).json({ error: { message: err.message || 'Internal Server Error' } }));
+app.use((err, req, res, next) => res.status(err.statusCode || 500).json({
+  success: false,
+  error: err.message || 'Internal Server Error',
+}));
 
 cron.schedule('* * * * *', async () => {
   if (!dbState.ready) return;

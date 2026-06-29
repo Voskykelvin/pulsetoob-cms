@@ -181,11 +181,18 @@ export default function NewArticlePage() {
   }
 
   const saveFeaturedImageMetadata = async () => {
-    if (!featuredImage?.id) return
-    await api.put(`/media/${featuredImage.id}`, {
-      altText: featuredImage.altText || '',
-      caption: featuredImage.caption || ''
-    })
+    if (!featuredImage?.id) return true
+
+    try {
+      await api.put(`/media/${featuredImage.id}`, {
+        altText: featuredImage.altText || '',
+        caption: featuredImage.caption || ''
+      })
+      return true
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Featured image metadata could not be saved. Article save will continue.'))
+      return false
+    }
   }
 
   const handleSubmit = async (status: 'draft' | 'published') => {

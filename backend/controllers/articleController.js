@@ -7,6 +7,40 @@ const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'publishedAt', 'title', 'views', 'status'];
 const ALLOWED_SORT_ORDERS = ['ASC', 'DESC'];
+const ARTICLE_UPDATE_FIELDS = [
+  'title',
+  'content',
+  'excerpt',
+  'subtitle',
+  'featuredImageId',
+  'videoUrl',
+  'videoEmbed',
+  'metaTitle',
+  'metaDescription',
+  'metaKeywords',
+  'canonicalUrl',
+  'ogImage',
+  'ogTitle',
+  'ogDescription',
+  'status',
+  'scheduledFor',
+  'isFeatured',
+  'isBreaking',
+  'isPinned',
+  'allowComments',
+  'rssIncluded',
+  'msnEligible',
+  'template',
+];
+
+function pickArticleUpdates(body) {
+  return ARTICLE_UPDATE_FIELDS.reduce((updates, field) => {
+    if (Object.prototype.hasOwnProperty.call(body, field)) {
+      updates[field] = body[field];
+    }
+    return updates;
+  }, {});
+}
 
 class ArticleController {
   async create(req, res) {
@@ -105,7 +139,14 @@ class ArticleController {
         return sendError(res, { status: 403, message: 'Not authorized to edit this article' });
       }
 
-      const updates = { ...req.body };
+      const updates = pickArticleUpdates(req.body);
+
+      if (Object.prototype.hasOwnProperty.call(req.body, 'section')) {
+        updates.customFields = {
+          ...(article.customFields || {}),
+          section: req.body.section || null,
+        };
+      }
 
       if (updates.title && updates.title !== article.title) {
         let slug = slugify(updates.title, { lower: true, strict: true });
@@ -165,7 +206,8 @@ class ArticleController {
       return sendSuccess(res, { data: updatedArticle, message: 'Article updated successfully' });
     } catch (error) {
       await transaction.rollback();
-      return sendError(res, { status: 500, message: 'Failed to update article' });
+      console.error('Update article error:', error);
+      return sendError(res, { status: 500, message: 'Failed to update article', details: error.message });
     }
   }
 
