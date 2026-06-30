@@ -80,6 +80,32 @@ async function recalculateTagArticleCounts(tagIds, transaction) {
   }
 }
 
+async function getCategoryAndDescendantIds(slug, activeOnly = true) {
+  const where = activeOnly ? { isActive: true } : {};
+  const categories = await Category.findAll({
+    where,
+    attributes: ['id', 'slug', 'parentId'],
+  });
+
+  const root = categories.find(category => category.slug === slug);
+  if (!root) return [];
+
+  const ids = [root.id];
+  const queue = [root.id];
+
+  while (queue.length > 0) {
+    const parentId = queue.shift();
+    const children = categories.filter(category => category.parentId === parentId);
+    for (const child of children) {
+      if (ids.includes(child.id)) continue;
+      ids.push(child.id);
+      queue.push(child.id);
+    }
+  }
+
+  return ids;
+}
+
 class ArticleController {
   async create(req, res) {
     const transaction = await sequelize.transaction();
@@ -321,14 +347,22 @@ class ArticleController {
         { model: Media, as: 'featuredImage', attributes: ['id', 'url', 'thumbnailUrl', 'altText', 'caption'] },
       ];
 
-      if (req.userId && ['admin', 'editor', 'super_admin'].includes(req.userRole)) {
+      const canSeeUnpublished = req.userId && ['admin', 'editor', 'super_admin'].includes(req.userRole);
+
+      if (canSeeUnpublished) {
         if (status) where.status = status;
       } else {
         where.status = 'published';
       }
 
       if (category) {
-        include.push({ model: Category, as: 'categories', where: { slug: category }, required: true });
+        const categoryIds = await getCategoryAndDescendantIds(category, !canSeeUnpublished);
+        include.push({
+          model: Category,
+          as: 'categories',
+          where: categoryIds.length > 0 ? { id: categoryIds } : { slug: category },
+          required: true,
+        });
       } else {
         include.push({ model: Category, as: 'categories', required: false });
       }

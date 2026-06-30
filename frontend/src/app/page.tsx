@@ -11,6 +11,7 @@ import {
   getPublicCategories,
   type PublicArticle,
 } from '@/lib/publicContent'
+import { getActiveCategories, getFooterCategories, getNavigationCategories } from '@/lib/publicCategories'
 
 export const revalidate = 60
 
@@ -87,6 +88,9 @@ export default async function HomePage() {
   const visibleArticles = articles.filter((article) => article.id !== hero?.id)
   const trending = visibleArticles.slice(0, 4)
   const rest = visibleArticles.slice(4)
+  const navCategories = getNavigationCategories(categories)
+  const browseCategories = getActiveCategories(categories)
+  const footerCategories = getFooterCategories(categories)
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -110,13 +114,13 @@ export default async function HomePage() {
           </div>
         </nav>
 
-        {categories.length > 0 && (
+        {navCategories.length > 0 && (
           <div className="bg-white border-b border-gray-100 overflow-x-auto whitespace-nowrap py-3">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-3">
               <Link href="/blog" className="px-4 py-1.5 bg-gray-900 text-white rounded-full text-xs font-semibold">
                 All
               </Link>
-              {categories.slice(0, 8).map((cat) => (
+              {navCategories.slice(0, 10).map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
@@ -236,11 +240,11 @@ export default async function HomePage() {
 
               <AdSlot slot="in_article_banner" adsenseClient={ADSENSE_CLIENT} adsenseSlot={ADSENSE_IN_ARTICLE_SLOT} />
 
-              {categories.length > 0 && (
+              {browseCategories.length > 0 && (
                 <section className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
                   <h2 className="text-sm font-bold text-gray-800 uppercase tracking-wider mb-6">Browse By Topic</h2>
                   <div className="flex flex-wrap gap-3">
-                    {categories.map((cat) => (
+                    {browseCategories.map((cat) => (
                       <Link
                         key={cat.id}
                         href={`/category/${cat.slug}`}
@@ -302,6 +306,11 @@ export default async function HomePage() {
             <Link href="/search" className="hover:underline">Search</Link>
             <Link href="/contact" className="hover:underline">Contact</Link>
             <Link href="/privacy" className="hover:underline">Privacy</Link>
+            {footerCategories.slice(0, 6).map((category) => (
+              <Link key={category.id} href={`/category/${category.slug}`} className="hover:underline">
+                {category.name}
+              </Link>
+            ))}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-100 py-6 flex flex-col sm:flex-row justify-between text-xs text-gray-400">

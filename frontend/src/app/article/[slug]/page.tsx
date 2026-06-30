@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import AdSlot from '@/components/AdSlot'
 import ArticleViewTracker from '@/components/ArticleViewTracker'
+import JsonLd from '@/components/JsonLd'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import RelatedPosts from '@/components/RelatedPosts'
 import ShareButtons from '@/components/ShareButtons'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
@@ -85,10 +87,6 @@ const renderStyles = `
   .ProseMirror-rendered h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
 `
 
-function cleanJsonLd(data: Record<string, unknown>) {
-  return JSON.stringify(data).replace(/</g, '\\u003c')
-}
-
 function getArticleSchema(article: PublicArticle) {
   const url = getArticleUrl(article)
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
@@ -117,6 +115,22 @@ function getArticleSchema(article: PublicArticle) {
     },
     articleSection: article.categories?.map((category) => category.name),
     keywords: article.metaKeywords?.join(', '),
+  }
+}
+
+function getArticleBreadcrumbSchema(article: PublicArticle) {
+  const siteUrl = getSiteUrl()
+  const url = getArticleUrl(article)
+  const category = article.categories?.[0]
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+      ...(category ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/category/${category.slug}` }] : []),
+      { '@type': 'ListItem', position: category ? 3 : 2, name: article.title, item: url },
+    ],
   }
 }
 
@@ -191,14 +205,12 @@ export default async function ArticlePage({
   const articleDescription = getArticleDescription(article)
   const relatedArticles = await getRelatedArticles(article.id, { limit: 3 })
   const schema = getArticleSchema(article)
+  const breadcrumbSchema = getArticleBreadcrumbSchema(article)
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#faf9f6]">
       <style dangerouslySetInnerHTML={{ __html: renderStyles }} />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: cleanJsonLd(schema) }}
-      />
+      <JsonLd data={[schema, breadcrumbSchema]} />
       <ArticleViewTracker articleId={article.id} slug={params.slug} />
 
       <div>
@@ -240,9 +252,9 @@ export default async function ArticlePage({
           {article.categories?.length ? (
             <div className="flex flex-wrap gap-2 mb-4">
               {article.categories.map((cat) => (
-                <span key={cat.id} className="text-xs font-extrabold uppercase tracking-widest text-green-700">
+                <Link key={cat.id} href={`/category/${cat.slug}`} className="text-xs font-extrabold uppercase tracking-widest text-green-700 hover:text-green-900 hover:underline">
                   {cat.name}
-                </span>
+                </Link>
               ))}
             </div>
           ) : null}
@@ -299,6 +311,16 @@ export default async function ArticlePage({
             url={articleUrl}
             description={articleDescription}
           />
+
+          <section className="mt-10 rounded-lg border border-green-100 bg-green-50 p-6 text-center">
+            <h2 className="text-lg font-extrabold text-green-950">Keep reading PulseToob</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-green-800">
+              Get the weekly digest of stories like this one, curated for readers who want the signal without the noise.
+            </p>
+            <div className="mt-4">
+              <NewsletterSignup source="article_reader" />
+            </div>
+          </section>
 
           <RelatedPosts articles={relatedArticles} />
         </main>

@@ -5,6 +5,7 @@ import {
   getPublicCategories,
   getSiteUrl,
 } from '@/lib/publicContent'
+import { getActiveCategories } from '@/lib/publicCategories'
 
 export const revalidate = 300
 
@@ -14,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getPublicArticles({ limit: 100 }),
     getPublicCategories(),
   ])
+  const allCategories = getActiveCategories(categories)
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {
@@ -55,9 +57,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }))
 
-  const categoryRoutes: MetadataRoute.Sitemap = categories.map((category) => ({
+  const categoryRoutes: MetadataRoute.Sitemap = allCategories.map((category) => ({
     url: `${siteUrl}/category/${category.slug}`,
-    lastModified: new Date(),
+    lastModified: category.updatedAt || category.createdAt || new Date(),
     changeFrequency: 'daily',
     priority: 0.6,
   }))

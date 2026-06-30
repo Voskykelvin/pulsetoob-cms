@@ -37,13 +37,15 @@ class CategoryController {
       if (flat === 'true') {
         categories = await Category.findAll({ where, order: [['order', 'ASC'], ['name', 'ASC']] });
       } else {
+        const childWhere = active === 'true' ? { isActive: true } : undefined;
         categories = await Category.findAll({
           where: { ...where, parentId: null },
           order: [['order', 'ASC'], ['name', 'ASC']],
           include: [{
             model: Category, as: 'subcategories',
+            where: childWhere,
             required: false,
-            include: [{ model: Category, as: 'subcategories', required: false }],
+            include: [{ model: Category, as: 'subcategories', where: childWhere, required: false }],
           }],
         });
       }

@@ -7,8 +7,10 @@ const API_URL = getApiBaseUrl()
 
 export default function NewsletterSignup({
   compact = false,
+  source,
 }: {
   compact?: boolean
+  source?: string
 }) {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -23,7 +25,7 @@ export default function NewsletterSignup({
       const response = await fetch(`${API_URL}/public/newsletter/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: compact ? 'contact_page' : 'homepage' }),
+        body: JSON.stringify({ email, source: source || (compact ? 'contact_page' : 'homepage') }),
       })
       const result = await response.json()
 

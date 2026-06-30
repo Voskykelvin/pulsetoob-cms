@@ -1,17 +1,26 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import JsonLd from '@/components/JsonLd'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import PublicArticleCard from '@/components/PublicArticleCard'
 import {
   getPublicArticles,
   getPublicCategories,
+  getSiteUrl,
 } from '@/lib/publicContent'
+import { getCategoryBySlug, getFooterCategories, getNavigationCategories } from '@/lib/publicCategories'
 
 export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'All Stories',
   description: 'Browse the latest stories, culture updates, lifestyle coverage, and entertainment posts from PulseToob.',
-  alternates: { canonical: '/blog' },
+  alternates: {
+    canonical: '/blog',
+    types: {
+      'application/rss+xml': '/api/rss/feed',
+    },
+  },
   openGraph: {
     title: 'All Stories | PulseToob',
     description: 'Browse the latest stories, culture updates, lifestyle coverage, and entertainment posts from PulseToob.',
@@ -26,15 +35,42 @@ export default async function BlogPage({
   searchParams?: { category?: string }
 }) {
   const activeFilter = typeof searchParams?.category === 'string' ? searchParams.category : ''
-  const [articles, categories] = await Promise.all([
-    getPublicArticles({ limit: 20, category: activeFilter }),
-    getPublicCategories(),
+  const categories = await getPublicCategories()
+  const activeCategory = activeFilter ? getCategoryBySlug(categories, activeFilter) : null
+  const [articles] = await Promise.all([
+    getPublicArticles({ limit: activeCategory?.postsPerPage || 20, category: activeFilter }),
   ])
-
-  const activeCategory = categories.find((cat) => cat.slug === activeFilter)
+  const navCategories = getNavigationCategories(categories)
+  const footerCategories = getFooterCategories(categories)
+  const siteUrl = getSiteUrl()
+  const pageUrl = activeCategory ? `${siteUrl}/category/${activeCategory.slug}` : `${siteUrl}/blog`
+  const schema = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: activeCategory ? `${activeCategory.name} Stories` : 'All Stories',
+      description: activeCategory?.description || 'Browse the latest stories from PulseToob.',
+      url: pageUrl,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: 'PulseToob',
+        url: siteUrl,
+      },
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: articles.slice(0, 12).map((article, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `${siteUrl}/article/${article.slug}`,
+          name: article.title,
+        })),
+      },
+    },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#faf9f6]">
+      <JsonLd data={schema} />
       <div>
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -75,7 +111,7 @@ export default async function BlogPage({
           >
             All Topics
           </Link>
-          {categories.map((cat) => (
+          {navCategories.map((cat) => (
             <Link
               key={cat.id}
               href={`/category/${cat.slug}`}
@@ -100,13 +136,28 @@ export default async function BlogPage({
               ))}
             </div>
           )}
+
+          <section className="mt-12 rounded-lg border border-green-100 bg-green-50 p-6 text-center">
+            <h2 className="text-lg font-extrabold text-green-950">Catch the weekly pulse</h2>
+            <p className="mx-auto mt-2 max-w-md text-sm text-green-800">Get a compact digest of the strongest PulseToob stories and topic clusters.</p>
+            <div className="mt-4">
+              <NewsletterSignup source="blog_archive" />
+            </div>
+          </section>
         </main>
       </div>
 
-      <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20 space-x-4">
-        <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
-        <Link href="/privacy" className="text-gray-500 hover:underline">Privacy</Link>
-        <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
+      <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20">
+        <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-4 px-4">
+          <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
+          <Link href="/privacy" className="text-gray-500 hover:underline">Privacy</Link>
+          <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
+          {footerCategories.slice(0, 6).map((category) => (
+            <Link key={category.id} href={`/category/${category.slug}`} className="text-gray-500 hover:underline">
+              {category.name}
+            </Link>
+          ))}
+        </div>
       </footer>
     </div>
   )

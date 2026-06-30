@@ -1,20 +1,30 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import JsonLd from '@/components/JsonLd'
 import SiteAnalyticsTracker from '@/components/SiteAnalyticsTracker'
 import ToastProvider from '@/components/ToastProvider'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = 'G-WSWVPG42ZF'
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
+const RSS_FEED_URL = `${SITE_URL}/api/rss/feed`
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'PulseToob',
     template: '%s | PulseToob',
   },
   description: 'Breaking stories, entertainment, lifestyle and trending content',
   applicationName: 'PulseToob',
+  keywords: ['PulseToob', 'entertainment news', 'lifestyle stories', 'music stories', 'movies', 'sports', 'culture'],
+  alternates: {
+    canonical: '/',
+    types: {
+      'application/rss+xml': RSS_FEED_URL,
+    },
+  },
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
     shortcut: ['/favicon.svg'],
@@ -24,10 +34,36 @@ export const metadata: Metadata = {
     siteName: 'PulseToob',
     title: 'PulseToob',
     description: 'Breaking stories, entertainment, lifestyle and trending content',
-    url: 'https://www.pulsetoob.com',
+    url: SITE_URL,
     type: 'website',
   },
+  twitter: {
+    card: 'summary',
+    title: 'PulseToob',
+    description: 'Breaking stories, entertainment, lifestyle and trending content',
+  },
 }
+
+const siteSchema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'PulseToob',
+    url: SITE_URL,
+    logo: `${SITE_URL}/favicon.svg`,
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'PulseToob',
+    url: SITE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  },
+]
 
 export default function RootLayout({
   children,
@@ -37,6 +73,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="alternate" type="application/rss+xml" title="PulseToob RSS Feed" href={RSS_FEED_URL} />
+        <JsonLd data={siteSchema} />
         <Script
           id="secureprivacy-banner"
           src="https://app.secureprivacy.ai/script/6a427b4c50650fd51e3e920f.js"

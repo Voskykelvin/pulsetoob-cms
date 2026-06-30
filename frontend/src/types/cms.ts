@@ -35,7 +35,12 @@ export interface Category {
   description?: string | null
   color?: string | null
   icon?: string | null
+  metaTitle?: string | null
+  metaDescription?: string | null
+  metaKeywords?: string[]
   parentId?: string | null
+  parent?: Category | null
+  subcategories?: Category[]
   order?: number
   isActive?: boolean
   articleCount?: number
@@ -47,6 +52,8 @@ export interface Category {
   isFeatured?: boolean
   layout?: 'grid' | 'list' | 'magazine' | 'masonry'
   postsPerPage?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface UserSummary {

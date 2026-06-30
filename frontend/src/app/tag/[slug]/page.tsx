@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import JsonLd from '@/components/JsonLd'
 import PublicArticleCard from '@/components/PublicArticleCard'
 import { getPublicArticles, getSiteUrl } from '@/lib/publicContent'
 
@@ -48,9 +49,43 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 export default async function TagPage({ params }: TagPageProps) {
   const articles = await getPublicArticles({ limit: 24, tag: params.slug })
   const tagName = getTagNameFromArticles(params.slug, articles)
+  const siteUrl = getSiteUrl()
+  const tagUrl = `${siteUrl}/tag/${params.slug}`
+  const schema = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: `${tagName} Stories`,
+      description: `Read the latest PulseToob stories tagged ${tagName}.`,
+      url: tagUrl,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: 'PulseToob',
+        url: siteUrl,
+      },
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: articles.slice(0, 12).map((article, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `${siteUrl}/article/${article.slug}`,
+          name: article.title,
+        })),
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+        { '@type': 'ListItem', position: 2, name: tagName, item: tagUrl },
+      ],
+    },
+  ]
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-[#faf9f6] text-gray-950">
+      <JsonLd data={schema} />
       <div>
         <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">

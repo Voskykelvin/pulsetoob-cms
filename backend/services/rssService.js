@@ -13,6 +13,27 @@ function getSiteUrl() {
   return siteUrl;
 }
 
+async function getCategoryAndDescendantIds(rootCategory) {
+  const categories = await Category.findAll({
+    where: { isActive: true },
+    attributes: ['id', 'parentId'],
+  });
+  const ids = [rootCategory.id];
+  const queue = [rootCategory.id];
+
+  while (queue.length > 0) {
+    const parentId = queue.shift();
+    const children = categories.filter(category => category.parentId === parentId);
+    for (const child of children) {
+      if (ids.includes(child.id)) continue;
+      ids.push(child.id);
+      queue.push(child.id);
+    }
+  }
+
+  return ids;
+}
+
 class RSSService {
   async generateMainFeed() {
     const siteUrl = getSiteUrl();
@@ -54,9 +75,10 @@ class RSSService {
   }
 
   async generateCategoryFeed(categorySlug) {
-    const category = await Category.findOne({ where: { slug: categorySlug } });
+    const category = await Category.findOne({ where: { slug: categorySlug, isActive: true } });
     if (!category) throw new Error('Category not found');
     const siteUrl = getSiteUrl();
+    const categoryIds = await getCategoryAndDescendantIds(category);
 
     const feed = new RSS({
       title: `PulseToob - ${category.name}`,
@@ -69,7 +91,7 @@ class RSSService {
 
     const articles = await Article.findAll({
       include: [
-        { model: Category, as: 'categories', where: { id: category.id }, attributes: [] },
+        { model: Category, as: 'categories', where: { id: categoryIds }, attributes: [] },
         { model: User, as: 'author', attributes: ['username', 'firstName', 'lastName'] },
         { model: Media, as: 'featuredImage' },
       ],
