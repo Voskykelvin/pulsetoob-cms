@@ -126,23 +126,47 @@ class MediaController {
       for (const file of req.files) {
         try {
           const isVideo = file.mimetype.startsWith('video/');
-          const publicId = `pulsetoob/${isVideo ? 'videos' : 'images'}/${uuidv4()}`;
+          const isImage = file.mimetype.startsWith('image/');
+          if (!isVideo && !isImage) continue;
+
+          const defaultFolder = isVideo ? 'videos' : 'images';
+          const mediaFolder = req.body.folder ? String(req.body.folder).trim() || defaultFolder : defaultFolder;
+          const publicId = `pulsetoob/${defaultFolder}/${uuidv4()}`;
 
           const result = await new Promise((resolve, reject) => {
             const stream = cloudinary.uploader.upload_stream(
-              { public_id: publicId, resource_type: isVideo ? 'video' : 'image' },
+              {
+                public_id: publicId,
+                folder: `pulsetoob/${defaultFolder}`,
+                resource_type: isVideo ? 'video' : 'image',
+                quality: isImage ? 'auto' : undefined,
+                fetch_format: isImage ? 'auto' : undefined,
+              },
               (error, result) => { if (error) reject(error); else resolve(result); }
             );
             stream.end(file.buffer);
           });
 
+          const variants = isImage ? buildCloudinaryVariants(result.secure_url) : {};
+
           const media = await Media.create({
             filename: result.public_id, originalName: file.originalname,
             mimeType: file.mimetype, type: isVideo ? 'video' : 'image',
             size: result.bytes, width: result.width, height: result.height,
+            duration: result.duration,
             url: result.secure_url, secureUrl: result.secure_url,
+            thumbnailUrl: variants.thumbnailMedium || null,
+            thumbnailSmall: variants.thumbnailSmall,
+            thumbnailMedium: variants.thumbnailMedium,
+            thumbnailLarge: variants.thumbnailLarge,
+            variants,
+            title: file.originalname.replace(/\.[^.]+$/, ''),
+            altText: '',
             storage: 'cloudinary', storageId: result.public_id,
-            folder: isVideo ? 'videos' : 'images', uploadedById: req.userId,
+            folder: mediaFolder,
+            needsAltText: isImage,
+            optimized: isImage,
+            uploadedById: req.userId,
           });
 
           results.push(media);

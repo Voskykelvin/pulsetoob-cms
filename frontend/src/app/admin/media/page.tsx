@@ -44,6 +44,7 @@ export default function MediaPage() {
   const [unusedOnly, setUnusedOnly] = useState(false)
   const [editing, setEditing] = useState<MediaAsset | null>(null)
   const [form, setForm] = useState<MediaForm>(emptyForm)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -63,7 +64,11 @@ export default function MediaPage() {
       if (folder) params.folder = folder
       if (unusedOnly) params.unused = 'true'
       const res = await api.get<ApiResponse<MediaAsset[]>>('/media', { params })
-      if (res.data.success) setMedia(res.data.data)
+      if (res.data.success) {
+        setMedia(res.data.data)
+        const visibleIds = new Set(res.data.data.map((item) => item.id))
+        setSelectedIds((current) => current.filter((id) => visibleIds.has(id)))
+      }
     } catch (err) {
       console.error(err)
     } finally {
@@ -76,16 +81,14 @@ export default function MediaPage() {
     if (!files || files.length === 0) return
     setUploading(true)
     try {
-      for (let i = 0; i < files.length; i++) {
-        const formData = new FormData()
-        formData.append('file', files[i])
-        formData.append('folder', folder || 'images')
-        const isVideo = files[i].type.startsWith('video/')
-        await api.post('/media/upload/' + (isVideo ? 'video' : 'image'), formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-      }
-      toast.success(files.length === 1 ? 'File uploaded' : `${files.length} files uploaded`)
+      const formData = new FormData()
+      Array.from(files).forEach((file) => formData.append('files', file))
+      if (folder) formData.append('folder', folder)
+      const res = await api.post<ApiResponse<MediaAsset[]>>('/media/upload/batch', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const uploadedCount = res.data.data?.length || files.length
+      toast.success(uploadedCount === 1 ? 'File uploaded' : `${uploadedCount} files uploaded`)
       fetchMedia()
     } catch (err) {
       toast.error('Upload failed')
@@ -131,6 +134,7 @@ export default function MediaPage() {
     try {
       await api.delete('/media/' + id)
       toast.success('Media deleted')
+      setSelectedIds((current) => current.filter((selectedId) => selectedId !== id))
       fetchMedia()
     } catch (err) {
       const error = err as AxiosError<ApiError>
@@ -143,6 +147,33 @@ export default function MediaPage() {
     toast.success('URL copied to clipboard')
   }
 
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  }
+
+  const selectAllVisible = () => {
+    setSelectedIds(media.map((item) => item.id))
+  }
+
+  const clearSelection = () => {
+    setSelectedIds([])
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return
+    if (!confirm(`Delete ${selectedIds.length} selected media item(s)? Files currently used in articles will be skipped.`)) return
+
+    try {
+      const res = await api.post<ApiResponse<unknown>>('/media/bulk-delete', { ids: selectedIds })
+      toast.success(res.data.message || 'Selected media deleted')
+      setSelectedIds([])
+      fetchMedia()
+    } catch (err) {
+      const error = err as AxiosError<ApiError>
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Bulk delete failed')
+    }
+  }
+
   const formatSize = (bytes?: number) => {
     if (!bytes) return '0 B'
     const k = 1024
@@ -150,6 +181,8 @@ export default function MediaPage() {
     const i = Math.floor(Math.log(bytes) / Math.log(k))
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
   }
+
+  const selectedCount = selectedIds.length
 
   return (
     <div className="space-y-6">
@@ -181,6 +214,17 @@ export default function MediaPage() {
           <input type="checkbox" checked={unusedOnly} onChange={(e) => setUnusedOnly(e.target.checked)} />
           Unused only
         </label>
+        <div className="flex items-center gap-2 ml-auto">
+          <button type="button" onClick={selectAllVisible} disabled={media.length === 0} className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50">
+            Select All
+          </button>
+          <button type="button" onClick={clearSelection} disabled={selectedCount === 0} className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-600 disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-gray-50">
+            Clear
+          </button>
+          <button type="button" onClick={handleBulkDelete} disabled={selectedCount === 0} className="px-3 py-2 text-sm font-semibold rounded-lg border border-red-200 bg-red-50 text-red-700 disabled:bg-gray-50 disabled:border-gray-200 disabled:text-gray-300 disabled:cursor-not-allowed hover:bg-red-100">
+            Delete Selected{selectedCount > 0 ? ` (${selectedCount})` : ''}
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -192,14 +236,17 @@ export default function MediaPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
           {media.map((item) => (
-            <div key={item.id} className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+            <div key={item.id} className={`group relative bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all ${selectedIds.includes(item.id) ? 'border-green-500 ring-2 ring-green-100' : 'border-gray-200'}`}>
               <div className="aspect-square w-full bg-gray-50 relative flex items-center justify-center overflow-hidden">
+                <label className="absolute top-2 left-2 z-10 flex h-6 w-6 items-center justify-center rounded-md bg-white/95 border border-gray-200 shadow-sm">
+                  <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelected(item.id)} className="h-4 w-4 accent-green-600" aria-label={`Select ${item.title || item.originalName || 'media item'}`} />
+                </label>
                 {item.type === 'image' ? (
                   <img src={item.thumbnailMedium || item.thumbnailUrl || item.url} alt={item.altText || item.originalName || ''} className="object-cover w-full h-full" style={{ objectPosition: `${(item.focalPointX ?? 0.5) * 100}% ${(item.focalPointY ?? 0.5) * 100}%` }} />
                 ) : (
                   <div className="text-sm text-gray-500 font-semibold">Video</div>
                 )}
-                {item.needsAltText && <span className="absolute top-2 left-2 px-2 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">Alt needed</span>}
+                {item.needsAltText && <span className="absolute top-10 left-2 px-2 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">Alt needed</span>}
                 {item.usageCount === 0 && <span className="absolute top-2 right-2 px-2 py-1 rounded bg-gray-50 text-gray-600 border border-gray-200 text-[10px] font-bold">Unused</span>}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button onClick={() => openEdit(item)} className="px-3 py-1 bg-white rounded-md text-gray-700 hover:bg-gray-100 text-xs font-semibold">Edit</button>

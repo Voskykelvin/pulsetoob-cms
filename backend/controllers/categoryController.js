@@ -102,7 +102,7 @@ class CategoryController {
   async createCategory(req, res) {
     try {
       const { name, description, icon, color, parentId, order, showInNav,
-        showInFooter, showInSidebar, isFeatured, layout, postsPerPage,
+        showInFooter, showInSidebar, isActive, isFeatured, layout, postsPerPage,
         metaTitle, metaDescription, metaKeywords, rssEnabled, msnEnabled } = req.body;
 
       let slug = slugify(name, { lower: true, strict: true });
@@ -119,6 +119,7 @@ class CategoryController {
         color: color || '#22c55e',
         parentId: parentId || null,
         order: order || 0,
+        isActive: isActive !== false,
         showInNav: showInNav !== false,
         showInFooter: showInFooter || false,
         showInSidebar: showInSidebar !== false,

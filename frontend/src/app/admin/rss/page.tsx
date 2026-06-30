@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
-import { getApiBaseUrl } from '@/utils/apiBase'
 
 export default function RSSPage() {
   const router = useRouter()
@@ -16,11 +15,11 @@ export default function RSSPage() {
       .catch(() => {})
   }, [router])
 
-  const apiUrl = getApiBaseUrl().replace(/\/api$/, '')
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
 
   const feeds = [
-    { name: 'Main Syndication Feed', url: apiUrl + '/api/rss/feed', desc: 'Syndicate all published blog posts to aggregators.' },
-    { name: 'MSN Core Feed', url: apiUrl + '/api/rss/msn', desc: 'Strict, compliant feed filtered specifically for MSN News.' },
+    { name: 'Main Syndication Feed', url: siteUrl + '/api/rss/feed', desc: 'Syndicate all published blog posts to aggregators.' },
+    { name: 'MSN Core Feed', url: siteUrl + '/api/rss/msn', desc: 'Strict, compliant feed filtered specifically for MSN News.' },
   ]
 
   const copyFeed = (url: string) => {
@@ -70,7 +69,7 @@ export default function RSSPage() {
           <h3 className="text-base font-bold text-gray-900 border-b pb-3 mb-4">Category Specific Feeds</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {categories.filter(c => c.rssEnabled).map((cat: any) => {
-              const url = `${apiUrl}/api/rss/category/${cat.slug}`
+              const url = `${siteUrl}/api/rss/category/${cat.slug}`
               return (
                 <div key={cat.id} className="p-4 border border-gray-100 rounded-xl bg-gray-50 flex flex-col justify-between">
                   <div>

@@ -455,13 +455,18 @@ class ArticleController {
       const { title, content, excerpt } = req.body;
       const article = await Article.findByPk(id);
       if (!article) return sendError(res, { status: 404, message: 'Article not found' });
-      if (article.authorId !== req.userId) return sendError(res, { status: 403, message: 'Not authorized' });
+      if (article.authorId !== req.userId && !['admin', 'editor', 'super_admin'].includes(req.userRole)) {
+        return sendError(res, { status: 403, message: 'Not authorized' });
+      }
 
       const updates = {};
       if (title) updates.title = title;
       if (content) {
-        updates.content = content;
-        updates.contentPlainText = content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+        updates.content = sanitizeHtml(content, {
+          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'iframe', 'video', 'h1', 'h2', 'h3', 'figure', 'figcaption']),
+          allowedAttributes: { ...sanitizeHtml.defaults.allowedAttributes, '*': ['class', 'id', 'style'], img: ['src', 'alt', 'title', 'width', 'height'], iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'], a: ['href', 'target', 'rel'] },
+        });
+        updates.contentPlainText = updates.content.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
         updates.wordCount = updates.contentPlainText.split(/\s+/).filter(w => w.length > 0).length;
         updates.readTime = Math.ceil(updates.wordCount / 200);
       }

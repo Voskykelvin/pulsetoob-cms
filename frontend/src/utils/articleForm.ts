@@ -29,3 +29,8 @@ export function toIsoDateTime(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
+
+export function emptyToNull(value: string) {
+  const trimmed = value.trim()
+  return trimmed ? trimmed : null
+}

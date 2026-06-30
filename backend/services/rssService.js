@@ -4,7 +4,13 @@ const { getAuthorName } = require('../utils/authorName');
 
 function getSiteUrl() {
   const frontendUrl = process.env.FRONTEND_URL?.split(',')[0]?.trim();
-  return (process.env.SITE_URL || frontendUrl || 'https://www.pulsetoob.com').replace(/\/+$/, '');
+  const siteUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || frontendUrl || 'https://www.pulsetoob.com').replace(/\/+$/, '');
+
+  if (process.env.NODE_ENV === 'production' && /onrender\.com|vercel\.app/i.test(siteUrl)) {
+    return 'https://www.pulsetoob.com';
+  }
+
+  return siteUrl;
 }
 
 class RSSService {
@@ -55,7 +61,7 @@ class RSSService {
     const feed = new RSS({
       title: `PulseToob - ${category.name}`,
       description: category.description || `Latest ${category.name} articles`,
-      site_url: `${siteUrl}/blog?category=${category.slug}`,
+      site_url: `${siteUrl}/category/${category.slug}`,
       feed_url: `${siteUrl}/api/rss/category/${category.slug}`,
       language: 'en',
       pubDate: new Date(),

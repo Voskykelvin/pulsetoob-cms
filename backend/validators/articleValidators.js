@@ -1,7 +1,7 @@
 const { body, param, query } = require('express-validator');
 
 const ARTICLE_STATUSES = ['draft', 'published', 'scheduled', 'archived'];
-const ARTICLE_TEMPLATES = ['default', 'featured', 'video'];
+const ARTICLE_TEMPLATES = ['default', 'full_width', 'sidebar', 'magazine', 'video', 'gallery'];
 const BULK_ACTIONS = ['publish', 'unpublish', 'archive', 'delete', 'feature', 'unfeature'];
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'publishedAt', 'title', 'views', 'status'];
 
@@ -63,7 +63,7 @@ const articleCreateRules = [
   optionalString('canonicalUrl', 500).optional({ nullable: true }).isURL({ require_protocol: true }).withMessage('canonicalUrl must be a valid URL'),
   optionalString('ogImage', 500),
   optionalString('ogTitle', 95),
-  optionalString('ogDescription', 220),
+  optionalString('ogDescription', 200),
   body('status').optional().isIn(ARTICLE_STATUSES).withMessage(`status must be one of: ${ARTICLE_STATUSES.join(', ')}`),
   body('scheduledFor').optional({ nullable: true }).isISO8601().withMessage('scheduledFor must be a valid date'),
   optionalBoolean('isFeatured'),
@@ -92,7 +92,7 @@ const articleUpdateRules = [
   optionalString('canonicalUrl', 500).optional({ nullable: true }).isURL({ require_protocol: true }).withMessage('canonicalUrl must be a valid URL'),
   optionalString('ogImage', 500),
   optionalString('ogTitle', 95),
-  optionalString('ogDescription', 220),
+  optionalString('ogDescription', 200),
   body('status').optional().isIn(ARTICLE_STATUSES).withMessage(`status must be one of: ${ARTICLE_STATUSES.join(', ')}`),
   body('scheduledFor').optional({ nullable: true }).isISO8601().withMessage('scheduledFor must be a valid date'),
   optionalBoolean('isFeatured'),

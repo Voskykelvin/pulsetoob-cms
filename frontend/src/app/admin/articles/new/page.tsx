@@ -8,7 +8,7 @@ import SeoPanel from '@/components/editor/SeoPanel'
 import MediaPickerModal from '@/components/editor/MediaPickerModal'
 import { renderArticleContent } from '@/utils/articleContent'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { parseMetaKeywords, parseTagNames, toIsoDateTime } from '@/utils/articleForm'
+import { emptyToNull, parseMetaKeywords, parseTagNames, toIsoDateTime } from '@/utils/articleForm'
 
 const RichEditor = dynamic(() => import('@/components/editor/RichEditor'), {
   ssr: false,
@@ -84,6 +84,28 @@ const previewStyles = `
   .ProseMirror-preview h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
 `
 
+const DEFAULT_FORM = {
+  title: '',
+  content: '',
+  excerpt: '',
+  metaTitle: '',
+  metaDescription: '',
+  metaKeywords: '',
+  canonicalUrl: '',
+  ogTitle: '',
+  ogDescription: '',
+  ogImage: '',
+  tagNames: '',
+  scheduledFor: '',
+  categoryIds: [] as string[],
+  isFeatured: false,
+  isPinned: false,
+  isBreaking: false,
+  rssIncluded: true,
+  template: 'default',
+  section: ''
+}
+
 export default function NewArticlePage() {
   const router = useRouter()
   const featuredImageInputRef = useRef<HTMLInputElement>(null)
@@ -98,22 +120,7 @@ export default function NewArticlePage() {
   // Isolated State: Keeping the featured image object completely safe from form edits
   const [featuredImage, setFeaturedImage] = useState<any>(null)
 
-  const [form, setForm] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    metaTitle: '',
-    metaDescription: '',
-    metaKeywords: '',
-    tagNames: '',
-    scheduledFor: '',
-    categoryIds: [] as string[],
-    isFeatured: false,
-    isPinned: false,
-    isBreaking: false,
-    rssIncluded: true,
-    section: ''
-  })
+  const [form, setForm] = useState(DEFAULT_FORM)
 
   // Load categories and check for Auth Token
   useEffect(() => {
@@ -134,7 +141,7 @@ export default function NewArticlePage() {
       const confirmRestore = window.confirm('An unsaved draft was found. Would you like to restore it?')
       if (confirmRestore) {
         try {
-          setForm(JSON.parse(savedDraft))
+          setForm({ ...DEFAULT_FORM, ...JSON.parse(savedDraft) })
           if (savedImage) setFeaturedImage(JSON.parse(savedImage))
         } catch (e) {
           localStorage.removeItem('pulse_article_draft')
@@ -213,7 +220,9 @@ export default function NewArticlePage() {
         scheduledFor,
         featuredImageId: featuredImage?.id || null, 
         metaKeywords: parseMetaKeywords(form.metaKeywords),
-        tagNames: parseTagNames(form.tagNames)
+        tagNames: parseTagNames(form.tagNames),
+        canonicalUrl: emptyToNull(form.canonicalUrl),
+        ogImage: emptyToNull(form.ogImage)
       }
       const res = await api.post('/articles', payload)
       if (res.data.success) {
@@ -466,6 +475,53 @@ export default function NewArticlePage() {
                   />
                   <p className="mt-1 text-xs text-gray-400">Tags become public topic pages and help cluster related stories.</p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Canonical URL</label>
+                  <input
+                    type="url"
+                    value={form.canonicalUrl}
+                    onChange={(e) => setForm(prev => ({ ...prev, canonicalUrl: e.target.value }))}
+                    placeholder="https://www.pulsetoob.com/article/preferred-url"
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Social Title</label>
+                    <input
+                      type="text"
+                      maxLength={95}
+                      value={form.ogTitle}
+                      onChange={(e) => setForm(prev => ({ ...prev, ogTitle: e.target.value }))}
+                      placeholder="Custom headline for Facebook/X cards"
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Social Image URL</label>
+                    <input
+                      type="url"
+                      value={form.ogImage}
+                      onChange={(e) => setForm(prev => ({ ...prev, ogImage: e.target.value }))}
+                      placeholder="https://..."
+                      className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Social Description</label>
+                  <textarea
+                    maxLength={200}
+                    rows={3}
+                    value={form.ogDescription}
+                    onChange={(e) => setForm(prev => ({ ...prev, ogDescription: e.target.value }))}
+                    placeholder="Optional share-card description."
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  />
+                </div>
               </div>
 
               <SeoPanel
@@ -596,6 +652,22 @@ export default function NewArticlePage() {
                 <option value="Lifestyle">Lifestyle</option>
                 <option value="Entertainment">Entertainment</option>
                 <option value="Sports">Sports</option>
+              </select>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Article Template</h3>
+              <select
+                value={form.template}
+                onChange={(e) => setForm(prev => ({ ...prev, template: e.target.value }))}
+                className="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:outline-none text-black cursor-pointer"
+              >
+                <option value="default">Default</option>
+                <option value="full_width">Full Width</option>
+                <option value="sidebar">Sidebar</option>
+                <option value="magazine">Magazine</option>
+                <option value="video">Video</option>
+                <option value="gallery">Gallery</option>
               </select>
             </div>
 

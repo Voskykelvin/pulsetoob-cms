@@ -1,6 +1,7 @@
 export type ArticleStatus = 'draft' | 'published' | 'scheduled' | 'archived'
 export type UserRole = 'super_admin' | 'admin' | 'editor' | 'author' | 'contributor' | 'subscriber'
 export type AdSlotName = 'header_leaderboard' | 'sidebar_square' | 'in_article_banner'
+export type ArticleTemplate = 'default' | 'full_width' | 'sidebar' | 'magazine' | 'video' | 'gallery'
 
 export interface MediaAsset {
   id: string
@@ -34,11 +35,18 @@ export interface Category {
   description?: string | null
   color?: string | null
   icon?: string | null
+  parentId?: string | null
+  order?: number
+  isActive?: boolean
   articleCount?: number
   showInNav?: boolean
+  showInFooter?: boolean
+  showInSidebar?: boolean
   rssEnabled?: boolean
   msnEnabled?: boolean
   isFeatured?: boolean
+  layout?: 'grid' | 'list' | 'magazine' | 'masonry'
+  postsPerPage?: number
 }
 
 export interface UserSummary {
@@ -70,16 +78,29 @@ export interface Article {
   id: string
   title: string
   slug: string
+  content?: string | null
   excerpt?: string | null
+  subtitle?: string | null
   status: ArticleStatus
   views?: number
   createdAt: string
   updatedAt?: string
   publishedAt?: string | null
   scheduledFor?: string | null
+  metaTitle?: string | null
+  metaDescription?: string | null
+  metaKeywords?: string[]
+  canonicalUrl?: string | null
+  ogTitle?: string | null
+  ogDescription?: string | null
+  ogImage?: string | null
   isFeatured?: boolean
   isPinned?: boolean
   isBreaking?: boolean
+  rssIncluded?: boolean
+  msnEligible?: boolean
+  template?: ArticleTemplate
+  section?: string | null
   author?: UserSummary
   categories?: Category[]
   tags?: Tag[]
