@@ -8,6 +8,21 @@ const nextConfig = {
     domains: ['res.cloudinary.com', 'localhost'],
     remotePatterns: [
       {
+        protocol: 'https',
+        hostname: 'pulsetoob-cms.onrender.com',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pulsetoob.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.pulsetoob.com',
+        pathname: '/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '5000',

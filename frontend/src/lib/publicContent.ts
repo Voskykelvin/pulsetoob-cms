@@ -96,7 +96,7 @@ async function fetchJson<T>(
   }
 }
 
-export async function getPublicArticles(options: { limit?: number; category?: string; tag?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
+export async function getPublicArticles(options: { limit?: number; category?: string; tag?: string; author?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
   const params = new URLSearchParams({
     limit: String(options.limit || 12),
     status: 'published',
@@ -106,6 +106,7 @@ export async function getPublicArticles(options: { limit?: number; category?: st
 
   if (options.category) params.set('category', options.category)
   if (options.tag) params.set('tag', options.tag)
+  if (options.author) params.set('author', options.author)
   if (options.search) params.set('search', options.search)
   if (typeof options.featured === 'boolean') params.set('featured', String(options.featured))
   if (typeof options.breaking === 'boolean') params.set('breaking', String(options.breaking))
@@ -158,6 +159,15 @@ export async function getRelatedArticles(articleId: string, options: { limit?: n
 
 export function getArticleUrl(article: Pick<PublicArticle, 'slug'>) {
   return `${getSiteUrl()}/article/${article.slug}`
+}
+
+export function getAuthorPath(author?: Pick<UserSummary, 'id'> | null) {
+  return author?.id ? `/author/${author.id}` : null
+}
+
+export function getAuthorUrl(author?: Pick<UserSummary, 'id'> | null) {
+  const path = getAuthorPath(author)
+  return path ? `${getSiteUrl()}${path}` : null
 }
 
 export function getFeaturedImageUrl(featuredImage?: PublicArticle['featuredImage']) {

@@ -4,7 +4,9 @@ import AdSlot from '@/components/AdSlot'
 import NewsletterSignup from '@/components/NewsletterSignup'
 import { getAuthorName } from '@/utils/author'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
+import PublicImage from '@/components/PublicImage'
 import {
+  getAuthorPath,
   getFeaturedImageAlt,
   getFeaturedImageUrl,
   getPublicArticles,
@@ -91,6 +93,7 @@ export default async function HomePage() {
   const navCategories = getNavigationCategories(categories)
   const browseCategories = getActiveCategories(categories)
   const footerCategories = getFooterCategories(categories)
+  const heroAuthorPath = getAuthorPath(hero?.author)
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
@@ -106,6 +109,9 @@ export default async function HomePage() {
               </Link>
               <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Search
+              </Link>
+              <Link href="/about" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                About
               </Link>
               <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Contact
@@ -147,11 +153,13 @@ export default async function HomePage() {
             <div className="space-y-12">
               {hero && (
                 <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center border-b border-gray-200 pb-12">
-                  <div className="lg:col-span-7 rounded-2xl overflow-hidden h-[300px] sm:h-[450px] bg-gray-100 border border-gray-200 shadow-sm">
+                  <div className="relative lg:col-span-7 rounded-2xl overflow-hidden h-[300px] sm:h-[450px] bg-gray-100 border border-gray-200 shadow-sm">
                     {getFeaturedImageUrl(hero.featuredImage) ? (
-                      <img
+                      <PublicImage
                         src={getFeaturedImageUrl(hero.featuredImage) || ''}
                         alt={getFeaturedImageAlt(hero)}
+                        priority
+                        sizes="(min-width: 1024px) 58vw, 100vw"
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -176,7 +184,13 @@ export default async function HomePage() {
                       {hero.excerpt || 'Read the full story to discover more details about this newly published narrative.'}
                     </p>
                     <div className="flex items-center gap-3 text-xs font-semibold text-gray-500">
-                      <span className="text-gray-800">{getAuthorName(hero.author)}</span>
+                      {heroAuthorPath ? (
+                        <Link href={heroAuthorPath} className="text-gray-800 hover:text-green-700 hover:underline">
+                          {getAuthorName(hero.author)}
+                        </Link>
+                      ) : (
+                        <span className="text-gray-800">{getAuthorName(hero.author)}</span>
+                      )}
                       <span>|</span>
                       <span>{hero.readTime || 5} min read</span>
                       {hero.publishedAt && (
@@ -204,9 +218,10 @@ export default async function HomePage() {
                       <article key={article.id} className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm flex flex-col h-full hover:shadow transition duration-150">
                         <div className="h-44 bg-gray-100 relative">
                           {getFeaturedImageUrl(article.featuredImage) ? (
-                            <img
+                            <PublicImage
                               src={getFeaturedImageUrl(article.featuredImage) || ''}
                               alt={getFeaturedImageAlt(article)}
+                              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
                               className="w-full h-full object-cover"
                             />
                           ) : (
@@ -228,7 +243,13 @@ export default async function HomePage() {
                             <p className="text-xs text-gray-500 line-clamp-2">{article.excerpt}</p>
                           </div>
                           <div className="flex items-center justify-between text-[11px] font-semibold text-gray-400 border-t border-gray-100 pt-3">
-                            <span>{getAuthorName(article.author)}</span>
+                            {getAuthorPath(article.author) ? (
+                              <Link href={getAuthorPath(article.author) || ''} className="hover:text-green-700 hover:underline">
+                                {getAuthorName(article.author)}
+                              </Link>
+                            ) : (
+                              <span>{getAuthorName(article.author)}</span>
+                            )}
                             <span>{article.readTime || 5} min</span>
                           </div>
                         </div>
@@ -261,11 +282,12 @@ export default async function HomePage() {
                 <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {rest.map((article) => (
                     <article key={article.id} className="flex gap-4 p-4 rounded-xl border border-gray-200 bg-white shadow-sm items-center hover:shadow transition duration-150">
-                      <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {getFeaturedImageUrl(article.featuredImage) ? (
-                          <img
+                          <PublicImage
                             src={getFeaturedImageUrl(article.featuredImage) || ''}
                             alt={getFeaturedImageAlt(article)}
+                            sizes="80px"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -304,6 +326,7 @@ export default async function HomePage() {
             <Link href="/" className="hover:underline">Home</Link>
             <Link href="/blog" className="hover:underline">All Stories</Link>
             <Link href="/search" className="hover:underline">Search</Link>
+            <Link href="/about" className="hover:underline">About</Link>
             <Link href="/contact" className="hover:underline">Contact</Link>
             <Link href="/privacy" className="hover:underline">Privacy</Link>
             {footerCategories.slice(0, 6).map((category) => (

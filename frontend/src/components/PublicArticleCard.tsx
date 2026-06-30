@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { getAuthorName } from '@/utils/author'
+import PublicImage from '@/components/PublicImage'
 import {
+  getAuthorPath,
   getFeaturedImageAlt,
   getFeaturedImageUrl,
   type PublicArticle,
@@ -30,14 +32,17 @@ export default function PublicArticleCard({ article }: { article: PublicArticle 
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
   const category = article.categories?.[0]
   const categoryTheme = getCatTheme(category?.name)
+  const authorPath = getAuthorPath(article.author)
+  const authorName = getAuthorName(article.author)
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow">
       <div className="relative h-44 bg-gray-100">
         {imageUrl ? (
-          <img
+          <PublicImage
             src={imageUrl}
             alt={getFeaturedImageAlt(article)}
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="h-full w-full object-cover"
           />
         ) : (
@@ -62,7 +67,13 @@ export default function PublicArticleCard({ article }: { article: PublicArticle 
           <p className="line-clamp-2 text-xs text-gray-500">{article.excerpt}</p>
         </div>
         <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-[11px] font-semibold text-gray-400">
-          <span>{getAuthorName(article.author)}</span>
+          {authorPath ? (
+            <Link href={authorPath} className="hover:text-green-700 hover:underline">
+              {authorName}
+            </Link>
+          ) : (
+            <span>{authorName}</span>
+          )}
           <span>{article.readTime || 5} min</span>
         </div>
       </div>

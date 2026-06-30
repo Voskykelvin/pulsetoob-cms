@@ -167,6 +167,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <div className="flex items-center gap-5 text-sm font-medium text-gray-600">
               <Link href="/blog" className="hover:text-gray-950">All Stories</Link>
               <Link href="/search" className="hover:text-gray-950">Search</Link>
+              <Link href="/about" className="hover:text-gray-950">About</Link>
               <Link href="/contact" className="hover:text-gray-950">Contact</Link>
             </div>
           </div>
@@ -261,6 +262,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20">
         <div className="mx-auto flex max-w-7xl flex-wrap justify-center gap-4 px-4">
           <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
+          <Link href="/about" className="text-gray-500 hover:underline">About</Link>
           <Link href="/privacy" className="text-gray-500 hover:underline">Privacy</Link>
           <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
           {footerCategories.slice(0, 6).map((item) => (

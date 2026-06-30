@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next'
 import {
   getArticleUrl,
+  getFeaturedImageUrl,
   getPublicArticles,
   getPublicCategories,
   getSiteUrl,
@@ -37,6 +38,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
+      url: `${siteUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
       url: `${siteUrl}/search`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -50,12 +57,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  const articleRoutes: MetadataRoute.Sitemap = articles.map((article) => ({
-    url: getArticleUrl(article),
-    lastModified: article.updatedAt || article.publishedAt || article.createdAt || new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.7,
-  }))
+  const articleRoutes: MetadataRoute.Sitemap = articles.map((article) => {
+    const imageUrl = getFeaturedImageUrl(article.featuredImage)
+
+    return {
+      url: getArticleUrl(article),
+      lastModified: article.updatedAt || article.publishedAt || article.createdAt || new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      ...(imageUrl ? { images: [imageUrl] } : {}),
+    }
+  })
 
   const categoryRoutes: MetadataRoute.Sitemap = allCategories.map((category) => ({
     url: `${siteUrl}/category/${category.slug}`,
@@ -76,5 +88,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.4,
   }))
 
-  return [...staticRoutes, ...categoryRoutes, ...tagRoutes, ...articleRoutes]
+  const authorIds = new Set<string>()
+  articles.forEach((article) => {
+    if (article.author?.id) authorIds.add(article.author.id)
+  })
+
+  const authorRoutes: MetadataRoute.Sitemap = Array.from(authorIds).map((id) => ({
+    url: `${siteUrl}/author/${id}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.4,
+  }))
+
+  return [...staticRoutes, ...categoryRoutes, ...tagRoutes, ...authorRoutes, ...articleRoutes]
 }

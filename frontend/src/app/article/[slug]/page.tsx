@@ -5,6 +5,7 @@ import AdSlot from '@/components/AdSlot'
 import ArticleViewTracker from '@/components/ArticleViewTracker'
 import JsonLd from '@/components/JsonLd'
 import NewsletterSignup from '@/components/NewsletterSignup'
+import PublicImage from '@/components/PublicImage'
 import RelatedPosts from '@/components/RelatedPosts'
 import ShareButtons from '@/components/ShareButtons'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
@@ -13,6 +14,8 @@ import { renderArticleContent } from '@/utils/articleContent'
 import {
   getArticleDescription,
   getArticleUrl,
+  getAuthorPath,
+  getAuthorUrl,
   getFeaturedImageAlt,
   getFeaturedImageUrl,
   getPublicArticle,
@@ -91,6 +94,7 @@ function getArticleSchema(article: PublicArticle) {
   const url = getArticleUrl(article)
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
   const description = getArticleDescription(article)
+  const authorUrl = getAuthorUrl(article.author)
 
   return {
     '@context': 'https://schema.org',
@@ -107,6 +111,7 @@ function getArticleSchema(article: PublicArticle) {
     author: {
       '@type': 'Person',
       name: getAuthorName(article.author, 'PulseToob Staff'),
+      url: authorUrl || undefined,
     },
     publisher: {
       '@type': 'Organization',
@@ -203,6 +208,8 @@ export default async function ArticlePage({
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
   const articleUrl = getArticleUrl(article)
   const articleDescription = getArticleDescription(article)
+  const authorPath = getAuthorPath(article.author)
+  const authorName = getAuthorName(article.author, 'PulseToob Staff')
   const relatedArticles = await getRelatedArticles(article.id, { limit: 3 })
   const schema = getArticleSchema(article)
   const breadcrumbSchema = getArticleBreadcrumbSchema(article)
@@ -226,6 +233,9 @@ export default async function ArticlePage({
               <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Search
               </Link>
+              <Link href="/about" className="text-sm font-medium text-gray-600 hover:text-gray-950">
+                About
+              </Link>
               <Link href="/contact" className="text-sm font-medium text-gray-600 hover:text-gray-950">
                 Contact
               </Link>
@@ -238,7 +248,13 @@ export default async function ArticlePage({
         {imageUrl && (
           <figure className="border-b border-gray-100 bg-white">
             <div className="w-full h-[300px] sm:h-[450px] relative overflow-hidden bg-gray-200">
-              <img src={imageUrl} alt={getFeaturedImageAlt(article)} className="w-full h-full object-cover" />
+              <PublicImage
+                src={imageUrl}
+                alt={getFeaturedImageAlt(article)}
+                priority
+                sizes="100vw"
+                className="w-full h-full object-cover"
+              />
             </div>
             {typeof article.featuredImage === 'object' && article.featuredImage?.caption && (
               <figcaption className="max-w-3xl mx-auto px-4 py-2 text-center text-xs text-gray-500">
@@ -275,7 +291,13 @@ export default async function ArticlePage({
             </div>
             <div>
               <span className="block font-bold text-gray-900">
-                {getAuthorName(article.author, 'PulseToob Staff')}
+                {authorPath ? (
+                  <Link href={authorPath} className="hover:text-green-700 hover:underline">
+                    {authorName}
+                  </Link>
+                ) : (
+                  authorName
+                )}
               </span>
               <span className="block text-xs mt-0.5">
                 {article.publishedAt && (
@@ -328,6 +350,7 @@ export default async function ArticlePage({
 
       <footer className="border-t border-gray-200 py-6 text-center text-xs text-gray-400 mt-20 space-x-4">
         <span>&copy; {new Date().getFullYear()} PulseToob. All rights reserved.</span>
+        <Link href="/about" className="text-gray-500 hover:underline">About</Link>
         <Link href="/privacy" className="text-gray-500 hover:underline">Privacy</Link>
         <Link href="/contact" className="text-gray-500 hover:underline">Contact</Link>
       </footer>

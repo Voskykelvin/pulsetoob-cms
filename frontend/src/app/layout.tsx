@@ -19,6 +19,17 @@ export const metadata: Metadata = {
   description: 'Breaking stories, entertainment, lifestyle and trending content',
   applicationName: 'PulseToob',
   keywords: ['PulseToob', 'entertainment news', 'lifestyle stories', 'music stories', 'movies', 'sports', 'culture'],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
   alternates: {
     canonical: '/',
     types: {

@@ -62,6 +62,7 @@ export interface UserSummary {
   firstName?: string | null
   lastName?: string | null
   avatar?: string | null
+  bio?: string | null
 }
 
 export interface Tag {

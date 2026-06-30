@@ -1,5 +1,6 @@
 const { Article, Backlink } = require('../models');
 const { Op } = require('sequelize');
+const indexNowService = require('./indexNowService');
 
 class SchedulerService {
   async publishScheduledArticles() {
@@ -11,6 +12,7 @@ class SchedulerService {
 
       for (const article of scheduledArticles) {
         await article.update({ status: 'published', publishedAt: now });
+        await indexNowService.submitArticle(article, 'scheduled_publish');
         console.log(`Published scheduled article: ${article.title}`);
       }
     } catch (error) {

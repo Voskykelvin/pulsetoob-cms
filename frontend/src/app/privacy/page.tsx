@@ -56,6 +56,7 @@ export default function PrivacyPage() {
           <div className="flex items-center gap-5 text-sm font-medium text-gray-600">
             <Link href="/blog" className="hover:text-gray-950">All Stories</Link>
             <Link href="/search" className="hover:text-gray-950">Search</Link>
+            <Link href="/about" className="hover:text-gray-950">About</Link>
             <Link href="/contact" className="hover:text-gray-950">Contact</Link>
           </div>
         </div>

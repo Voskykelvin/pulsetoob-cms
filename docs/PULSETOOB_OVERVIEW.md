@@ -1,6 +1,6 @@
 # PulseToob Overview
 
-Last updated: June 29, 2026
+Last updated: July 1, 2026
 
 ## Table Of Contents
 
@@ -81,7 +81,7 @@ The site supports real publishing workflows: article drafting, rich text editing
 
 - Neon PostgreSQL stores users, articles, categories, media records, newsletter subscribers, contact messages, advertisements, analytics, comments, backlinks, and settings.
 - Cloudinary stores uploaded images and generated media variants.
-- Environment secrets live in Vercel, Render, Neon, and Cloudinary dashboards, not in Git.
+- Environment secrets live in Vercel, Render, Neon, Cloudinary, Google, and SecurePrivacy dashboards, not in Git.
 
 ## Public Site
 
@@ -95,12 +95,15 @@ The public PulseToob site currently includes:
 - `/article/[slug]` article detail pages.
 - Related posts on article pages.
 - Public contact page for story tips, collaborations, advertising, corrections, and general messages.
+- Public about page with editorial standards, corrections guidance, sponsorship transparency, and a privacy entry point.
 - Public privacy policy page.
+- Public author profile pages linked from article bylines and article cards.
 - Newsletter signup forms on the homepage and contact page.
-- Featured image rendering with alt text.
+- Responsive featured image rendering with alt text.
 - Inline article images with caption and credit rendering.
 - Author name cleanup for public display.
-- SEO metadata, Open Graph metadata, sitemap, and robots routes.
+- SEO metadata, Open Graph metadata, article/category/tag/author schema, sitemap, news sitemap, image sitemap entries, and robots routes.
+- Google-friendly large image preview metadata.
 - RSS feed and MSN feed support through the backend.
 
 ## Admin CMS
@@ -151,6 +154,7 @@ PulseToob now has several data-related systems active or available:
 - Newsletter signup storage.
 - Contact message storage.
 - SecurePrivacy privacy banner script.
+- IndexNow submission support for article publish, update, unpublish, delete, bulk publish/status changes, and scheduled publishing once `INDEXNOW_KEY` is configured in Render and Vercel.
 
 Because analytics, ads, contact forms, and newsletter forms all process visitor or submitted data, PulseToob should keep a privacy-aware operating posture even if the site does not collect sensitive personal data.
 
@@ -159,6 +163,8 @@ Important follow-up:
 - Configure SecurePrivacy so the banner matches the site behavior and required jurisdictions.
 - Keep privacy policy text aligned with Google Analytics, AdSense, newsletter signup, contact messages, and internal analytics.
 - Confirm AdSense and Analytics consent behavior after SecurePrivacy configuration.
+- Add the same `INDEXNOW_KEY` value in Render and Vercel, then confirm `https://www.pulsetoob.com/indexnow-key.txt` returns the key.
+- If the key file route changes, set `INDEXNOW_KEY_LOCATION` in Render to the public key file URL.
 
 ## Application Structure
 
@@ -224,7 +230,8 @@ After frontend deployment:
 
 - Visit `https://www.pulsetoob.com`.
 - Confirm the homepage renders current stories.
-- Confirm `/search`, `/privacy`, and at least one `/category/[slug]` page render.
+- Confirm `/search`, `/about`, `/privacy`, and at least one `/category/[slug]` page render.
+- Confirm `https://www.pulsetoob.com/news-sitemap.xml` renders XML.
 - Confirm the Google Analytics tag is present when expected.
 - Confirm the SecurePrivacy banner script is present and configured.
 - Confirm AdSense scripts/ad slots do not break layout.
@@ -254,7 +261,6 @@ After backend deployment:
 
 ### Public Site
 
-- Add richer author pages.
 - Improve mobile article typography and spacing.
 - Add a persistent cookie preference entry point if SecurePrivacy does not provide one directly.
 - Add newsletter provider integration if the list grows beyond basic storage.
@@ -274,6 +280,7 @@ After backend deployment:
 - Keep Facebook Page crossposting deferred until publishing rhythm and audience size justify it.
 - See `docs/FACEBOOK_CROSSPOSTING_DEFERRED.md` for the planned approach.
 - Add a queue/retry worker before enabling automatic social posting.
+- Consider submitting the news sitemap in Google Search Console after the next frontend deployment.
 
 ## Maintenance Notes
 

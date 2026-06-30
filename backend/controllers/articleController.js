@@ -3,6 +3,7 @@ const { Op } = require('sequelize');
 const slugify = require('slugify');
 const sanitizeHtml = require('sanitize-html');
 const seoService = require('../services/seoService');
+const indexNowService = require('../services/indexNowService');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const ALLOWED_SORT_FIELDS = ['createdAt', 'updatedAt', 'publishedAt', 'title', 'views', 'status'];
@@ -106,6 +107,20 @@ async function getCategoryAndDescendantIds(slug, activeOnly = true) {
   return ids;
 }
 
+function notifyIndexNowForArticle(article, reason) {
+  if (!article) return;
+  indexNowService.submitArticle(article, reason).catch((error) => {
+    console.warn(`IndexNow article notification failed for ${reason}:`, error.message);
+  });
+}
+
+function notifyIndexNowForArticles(articles, reason) {
+  if (!articles || articles.length === 0) return;
+  indexNowService.submitArticles(articles, reason).catch((error) => {
+    console.warn(`IndexNow bulk notification failed for ${reason}:`, error.message);
+  });
+}
+
 class ArticleController {
   async create(req, res) {
     const transaction = await sequelize.transaction();
@@ -185,6 +200,10 @@ class ArticleController {
         ],
       });
 
+      if (fullArticle.status === 'published') {
+        notifyIndexNowForArticle(fullArticle, 'article_create_publish');
+      }
+
       return sendSuccess(res, { status: 201, data: fullArticle, message: `Article ${status === 'published' ? 'published' : 'saved'} successfully` });
     } catch (error) {
       await transaction.rollback();
@@ -199,6 +218,7 @@ class ArticleController {
       const { id } = req.params;
       const article = await Article.findByPk(id);
       if (!article) return sendError(res, { status: 404, message: 'Article not found' });
+      const wasPublished = article.status === 'published';
 
       if (article.authorId !== req.userId && !['admin', 'editor', 'super_admin'].includes(req.userRole)) {
         return sendError(res, { status: 403, message: 'Not authorized to edit this article' });
@@ -286,6 +306,10 @@ class ArticleController {
         ],
       });
 
+      if (wasPublished || updatedArticle.status === 'published') {
+        notifyIndexNowForArticle(updatedArticle, 'article_update');
+      }
+
       return sendSuccess(res, { data: updatedArticle, message: 'Article updated successfully' });
     } catch (error) {
       await transaction.rollback();
@@ -343,7 +367,7 @@ class ArticleController {
       const offset = (pageNumber - 1) * pageSize;
       const where = {};
       const include = [
-        { model: User, as: 'author', attributes: ['id', 'username', 'firstName', 'lastName', 'avatar'] },
+        { model: User, as: 'author', attributes: ['id', 'username', 'firstName', 'lastName', 'avatar', 'bio'] },
         { model: Media, as: 'featuredImage', attributes: ['id', 'url', 'thumbnailUrl', 'altText', 'caption'] },
       ];
 
@@ -437,7 +461,9 @@ class ArticleController {
         return sendError(res, { status: 403, message: 'Not authorized' });
       }
 
+      const wasPublished = article.status === 'published';
       await article.destroy();
+      if (wasPublished) notifyIndexNowForArticle(article, 'article_delete');
       return sendSuccess(res, { message: 'Article deleted successfully' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to delete article' });
@@ -452,6 +478,7 @@ class ArticleController {
         await Article.update({ isPinned: false }, { where: { id: { [Op.ne]: article.id } } });
       }
       await article.update({ status: 'published', publishedAt: new Date() });
+      notifyIndexNowForArticle(article, 'article_publish');
       return sendSuccess(res, { data: article, message: 'Article published successfully' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to publish article' });
@@ -462,7 +489,9 @@ class ArticleController {
     try {
       const article = await Article.findByPk(req.params.id);
       if (!article) return sendError(res, { status: 404, message: 'Article not found' });
+      const wasPublished = article.status === 'published';
       await article.update({ status: 'draft' });
+      if (wasPublished) notifyIndexNowForArticle(article, 'article_unpublish');
       return sendSuccess(res, { data: article, message: 'Article unpublished' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to unpublish article' });
@@ -516,6 +545,11 @@ class ArticleController {
   async bulkAction(req, res) {
     try {
       const { ids, action } = req.body;
+      const shouldNotifyIndexNow = ['publish', 'unpublish', 'archive', 'delete'].includes(action);
+      const affectedArticles = shouldNotifyIndexNow
+        ? await Article.findAll({ where: { id: ids }, attributes: ['id', 'slug', 'status'] })
+        : [];
+
       switch (action) {
         case 'publish': await Article.update({ status: 'published', publishedAt: new Date() }, { where: { id: ids } }); break;
         case 'unpublish': await Article.update({ status: 'draft' }, { where: { id: ids } }); break;
@@ -524,6 +558,15 @@ class ArticleController {
         case 'feature': await Article.update({ isFeatured: true }, { where: { id: ids } }); break;
         case 'unfeature': await Article.update({ isFeatured: false }, { where: { id: ids } }); break;
         default: return sendError(res, { status: 400, message: `Unknown action: ${action}` });
+      }
+
+      if (action === 'publish') {
+        notifyIndexNowForArticles(affectedArticles, 'bulk_publish');
+      } else if (shouldNotifyIndexNow) {
+        notifyIndexNowForArticles(
+          affectedArticles.filter(article => article.status === 'published'),
+          `bulk_${action}`
+        );
       }
 
       return sendSuccess(res, { message: `Bulk ${action} completed on ${ids.length} article(s)` });
