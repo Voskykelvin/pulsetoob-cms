@@ -48,6 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Categories', href: '/admin/categories' },
     { label: 'Media', href: '/admin/media' },
     { label: 'Analytics', href: '/admin/analytics' },
+    { label: 'Audience', href: '/admin/audience' },
     { label: 'Advertising', href: '/admin/ads' },
     { label: 'SEO Tools', href: '/admin/seo' },
     { label: 'RSS Feeds', href: '/admin/rss' },

@@ -61,6 +61,25 @@ async function recalculateCategoryArticleCounts(categoryIds, transaction) {
   }
 }
 
+async function recalculateTagArticleCounts(tagIds, transaction) {
+  const uniqueIds = [...new Set((tagIds || []).filter(Boolean))];
+
+  for (const tagId of uniqueIds) {
+    const articleCount = await Article.count({
+      include: [{
+        model: Tag,
+        as: 'tags',
+        where: { id: tagId },
+        attributes: [],
+        through: { attributes: [] },
+      }],
+      transaction,
+    });
+
+    await Tag.update({ articleCount }, { where: { id: tagId }, transaction });
+  }
+}
+
 class ArticleController {
   async create(req, res) {
     const transaction = await sequelize.transaction();
@@ -123,6 +142,7 @@ class ArticleController {
           tags.push(tag);
         }
         await article.setTags(tags, { transaction });
+        await recalculateTagArticleCounts(tags.map(tag => tag.id), transaction);
       }
 
       const seoAnalysis = seoService.analyzArticle({ title, content: sanitizedContent, metaDescription: metaDescription || finalExcerpt.substring(0, 160), metaKeywords: metaKeywords || [], slug, featuredImage: featuredImageId ? { url: 'exists' } : null });
@@ -165,6 +185,9 @@ class ArticleController {
       const tagNames = hasTagUpdates ? req.body.tagNames : undefined;
       const previousCategories = hasCategoryUpdates
         ? await article.getCategories({ attributes: ['id'], transaction })
+        : [];
+      const previousTags = hasTagUpdates
+        ? await article.getTags({ attributes: ['id'], transaction })
         : [];
 
       if (Object.prototype.hasOwnProperty.call(req.body, 'section')) {
@@ -220,6 +243,10 @@ class ArticleController {
           tags.push(tag);
         }
         await article.setTags(tags, { transaction });
+        await recalculateTagArticleCounts([
+          ...previousTags.map(tag => tag.id),
+          ...tags.map(tag => tag.id),
+        ], transaction);
       }
 
       await transaction.commit();

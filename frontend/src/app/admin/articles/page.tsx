@@ -17,6 +17,8 @@ const EMPTY_PAGINATION: Pagination = {
   hasPrev: false,
 }
 
+type BulkArticleAction = 'publish' | 'unpublish' | 'archive' | 'delete' | 'feature' | 'unfeature'
+
 export default function ArticlesPage() {
   const router = useRouter()
   const [articles, setArticles] = useState<Article[]>([])
@@ -25,6 +27,9 @@ export default function ArticlesPage() {
   const [statusFilter, setStatusFilter] = useState<ArticleStatus | ''>('')
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState<Pagination>(EMPTY_PAGINATION)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [bulkAction, setBulkAction] = useState<BulkArticleAction>('publish')
+  const [bulkWorking, setBulkWorking] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -45,11 +50,41 @@ export default function ArticlesPage() {
       if (res.data.success) { 
         setArticles(res.data.data) 
         setPagination(res.data.pagination || EMPTY_PAGINATION) 
+        setSelectedIds([])
       }
     } catch (err) {
       console.error(err)
     } finally { 
       setLoading(false) 
+    }
+  }
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])
+  }
+
+  const togglePageSelected = () => {
+    if (articles.length > 0 && selectedIds.length === articles.length) {
+      setSelectedIds([])
+      return
+    }
+
+    setSelectedIds(articles.map((article) => article.id))
+  }
+
+  const runBulkAction = async () => {
+    if (selectedIds.length === 0) return toast.error('Select at least one article')
+    if (bulkAction === 'delete' && !confirm(`Delete ${selectedIds.length} selected article(s)?`)) return
+
+    setBulkWorking(true)
+    try {
+      await api.post('/articles/bulk', { ids: selectedIds, action: bulkAction })
+      toast.success(`Bulk ${bulkAction} completed`)
+      fetchArticles()
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Bulk action failed'))
+    } finally {
+      setBulkWorking(false)
     }
   }
 
@@ -104,16 +139,60 @@ export default function ArticlesPage() {
           <option value="published">Published</option>
           <option value="draft">Draft</option>
           <option value="scheduled">Scheduled</option>
+          <option value="archived">Archived</option>
         </select>
         <span style={{ color: '#6b7280', fontSize: '0.875rem', marginLeft: 'auto' }}>
           {pagination.total || 0} articles
         </span>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1rem', marginBottom: '1rem', display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ color: '#166534', fontSize: '0.875rem', fontWeight: 700 }}>
+            {selectedIds.length} selected
+          </span>
+          <select
+            value={bulkAction}
+            onChange={(e) => setBulkAction(e.target.value as BulkArticleAction)}
+            style={{ padding: '0.5rem 0.75rem', border: '1px solid #bbf7d0', borderRadius: '8px', fontSize: '0.875rem', outline: 'none', background: 'white' }}
+          >
+            <option value="publish">Publish</option>
+            <option value="unpublish">Move to Draft</option>
+            <option value="archive">Archive</option>
+            <option value="feature">Set Featured</option>
+            <option value="unfeature">Remove Featured</option>
+            <option value="delete">Delete</option>
+          </select>
+          <button
+            type="button"
+            onClick={runBulkAction}
+            disabled={bulkWorking}
+            style={{ padding: '0.5rem 1rem', background: '#16a34a', color: 'white', border: 'none', borderRadius: '8px', cursor: bulkWorking ? 'not-allowed' : 'pointer', opacity: bulkWorking ? 0.7 : 1, fontSize: '0.875rem', fontWeight: 700 }}
+          >
+            {bulkWorking ? 'Working...' : 'Apply'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds([])}
+            style={{ padding: '0.5rem 1rem', background: 'white', color: '#166534', border: '1px solid #bbf7d0', borderRadius: '8px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600 }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+              <th style={{ padding: '0.875rem 1rem', width: '44px' }}>
+                <input
+                  type="checkbox"
+                  checked={articles.length > 0 && selectedIds.length === articles.length}
+                  onChange={togglePageSelected}
+                  aria-label="Select all articles on this page"
+                />
+              </th>
               <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Title</th>
               <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Status</th>
               <th style={{ padding: '0.875rem 1rem', textAlign: 'left', fontSize: '0.8rem', fontWeight: '600', color: '#6b7280', textTransform: 'uppercase' }}>Views</th>
@@ -125,19 +204,27 @@ export default function ArticlesPage() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                  <td colSpan={5} style={{ padding: '1rem' }}>
+                  <td colSpan={6} style={{ padding: '1rem' }}>
                     <div style={{ height: '16px', background: '#f3f4f6', borderRadius: '4px' }} />
                   </td>
                 </tr>
               ))
             ) : articles.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
+                <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#9ca3af' }}>
                   No articles found. <Link href="/admin/articles/new" style={{ color: '#16a34a' }}>Create your first article</Link>
                 </td>
               </tr>
             ) : articles.map((article) => (
                 <tr key={article.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(article.id)}
+                      onChange={() => toggleSelected(article.id)}
+                      aria-label={`Select ${article.title}`}
+                    />
+                  </td>
                   <td style={{ padding: '1rem' }}>
                     <div style={{ fontWeight: '500', color: '#111827', fontSize: '0.9rem' }}>{article.title}</div>
                     <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: '0.2rem' }}>/{article.slug}</div>

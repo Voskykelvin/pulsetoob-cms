@@ -1,4 +1,4 @@
-const { User, Article, Media, Category, Analytics, Setting } = require('../models');
+const { User, Article, Media, Category, Analytics, Setting, NewsletterSubscriber, ContactMessage } = require('../models');
 const { Op } = require('sequelize');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
@@ -210,6 +210,111 @@ class AdminController {
       return sendSuccess(res, { message: 'User deleted successfully' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to delete user' });
+    }
+  }
+
+  async getNewsletterSubscribers(req, res) {
+    try {
+      const { page = 1, limit = 50, status, search } = req.query;
+      const pageNumber = parseInt(page, 10);
+      const pageSize = parseInt(limit, 10);
+      const offset = (pageNumber - 1) * pageSize;
+      const where = {};
+
+      if (status) where.status = status;
+      if (search) where.email = { [Op.iLike]: `%${search}%` };
+
+      const { count, rows } = await NewsletterSubscriber.findAndCountAll({
+        where,
+        limit: pageSize,
+        offset,
+        order: [['createdAt', 'DESC']],
+      });
+
+      return sendSuccess(res, {
+        data: rows,
+        pagination: {
+          total: count,
+          page: pageNumber,
+          limit: pageSize,
+          pages: Math.ceil(count / pageSize),
+          hasNext: offset + pageSize < count,
+          hasPrev: pageNumber > 1,
+        },
+      });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to fetch newsletter subscribers' });
+    }
+  }
+
+  async updateNewsletterSubscriber(req, res) {
+    try {
+      const subscriber = await NewsletterSubscriber.findByPk(req.params.id);
+      if (!subscriber) return sendError(res, { status: 404, message: 'Subscriber not found' });
+
+      const updates = {};
+      if (['active', 'unsubscribed'].includes(req.body.status)) updates.status = req.body.status;
+
+      await subscriber.update(updates);
+      return sendSuccess(res, { data: subscriber, message: 'Subscriber updated successfully' });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to update subscriber' });
+    }
+  }
+
+  async getContactMessages(req, res) {
+    try {
+      const { page = 1, limit = 50, status, topic, search } = req.query;
+      const pageNumber = parseInt(page, 10);
+      const pageSize = parseInt(limit, 10);
+      const offset = (pageNumber - 1) * pageSize;
+      const where = {};
+
+      if (status) where.status = status;
+      if (topic) where.topic = topic;
+      if (search) {
+        where[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { email: { [Op.iLike]: `%${search}%` } },
+          { subject: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
+
+      const { count, rows } = await ContactMessage.findAndCountAll({
+        where,
+        limit: pageSize,
+        offset,
+        order: [['createdAt', 'DESC']],
+      });
+
+      return sendSuccess(res, {
+        data: rows,
+        pagination: {
+          total: count,
+          page: pageNumber,
+          limit: pageSize,
+          pages: Math.ceil(count / pageSize),
+          hasNext: offset + pageSize < count,
+          hasPrev: pageNumber > 1,
+        },
+      });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to fetch contact messages' });
+    }
+  }
+
+  async updateContactMessage(req, res) {
+    try {
+      const message = await ContactMessage.findByPk(req.params.id);
+      if (!message) return sendError(res, { status: 404, message: 'Contact message not found' });
+
+      const updates = {};
+      if (['new', 'reviewed', 'archived'].includes(req.body.status)) updates.status = req.body.status;
+
+      await message.update(updates);
+      return sendSuccess(res, { data: message, message: 'Contact message updated successfully' });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Failed to update contact message' });
     }
   }
 

@@ -17,6 +17,10 @@ router.get('/ads', adListRules, validate, adController.listAds.bind(adController
 router.post('/ads', authorize('super_admin'), createAdRules, validate, adController.createAd.bind(adController));
 router.put('/ads/:id', updateAdRules, validate, adController.updateAd.bind(adController));
 router.delete('/ads/:id', authorize('super_admin'), adIdParamRules, validate, adController.deleteAd.bind(adController));
+router.get('/newsletter/subscribers', adminController.getNewsletterSubscribers.bind(adminController));
+router.put('/newsletter/subscribers/:id', adminController.updateNewsletterSubscriber.bind(adminController));
+router.get('/contact-messages', adminController.getContactMessages.bind(adminController));
+router.put('/contact-messages/:id', adminController.updateContactMessage.bind(adminController));
 router.get('/settings', adminController.getSettings.bind(adminController));
 router.put('/settings', adminController.updateSettings.bind(adminController));
 router.post('/settings', adminController.updateSettings.bind(adminController));

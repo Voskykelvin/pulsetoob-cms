@@ -286,9 +286,9 @@ export default async function ArticlePage({
           {article.tags?.length ? (
             <div className="flex flex-wrap gap-2 mt-12 border-t border-gray-100 pt-6">
               {article.tags.map((tag) => (
-                <span key={tag.id} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold">
+                <Link key={tag.id} href={`/tag/${tag.slug}`} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-xs font-semibold hover:bg-green-50 hover:text-green-700">
                   #{tag.name}
-                </span>
+                </Link>
               ))}
             </div>
           ) : null}

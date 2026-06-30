@@ -96,7 +96,7 @@ async function fetchJson<T>(
   }
 }
 
-export async function getPublicArticles(options: { limit?: number; category?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
+export async function getPublicArticles(options: { limit?: number; category?: string; tag?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
   const params = new URLSearchParams({
     limit: String(options.limit || 12),
     status: 'published',
@@ -105,6 +105,7 @@ export async function getPublicArticles(options: { limit?: number; category?: st
   })
 
   if (options.category) params.set('category', options.category)
+  if (options.tag) params.set('tag', options.tag)
   if (options.search) params.set('search', options.search)
   if (typeof options.featured === 'boolean') params.set('featured', String(options.featured))
   if (typeof options.breaking === 'boolean') params.set('breaking', String(options.breaking))

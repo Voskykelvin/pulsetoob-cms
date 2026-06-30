@@ -62,5 +62,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticRoutes, ...categoryRoutes, ...articleRoutes]
+  const tagSlugs = new Set<string>()
+  articles.forEach((article) => {
+    article.tags?.forEach((tag) => tagSlugs.add(tag.slug))
+  })
+
+  const tagRoutes: MetadataRoute.Sitemap = Array.from(tagSlugs).map((slug) => ({
+    url: `${siteUrl}/tag/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.4,
+  }))
+
+  return [...staticRoutes, ...categoryRoutes, ...tagRoutes, ...articleRoutes]
 }

@@ -49,6 +49,14 @@ export interface UserSummary {
   avatar?: string | null
 }
 
+export interface Tag {
+  id: string
+  name: string
+  slug: string
+  articleCount?: number
+  color?: string | null
+}
+
 export interface CmsUser extends UserSummary {
   email: string
   role: UserRole
@@ -74,7 +82,30 @@ export interface Article {
   isBreaking?: boolean
   author?: UserSummary
   categories?: Category[]
+  tags?: Tag[]
   featuredImage?: MediaAsset | null
+}
+
+export interface NewsletterSubscriber {
+  id: string
+  email: string
+  source?: string | null
+  status: 'active' | 'unsubscribed'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ContactMessage {
+  id: string
+  name: string
+  email: string
+  topic: 'collaboration' | 'advertising' | 'correction' | 'story_tip' | 'general'
+  subject: string
+  message: string
+  consent: boolean
+  status: 'new' | 'reviewed' | 'archived'
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Pagination {

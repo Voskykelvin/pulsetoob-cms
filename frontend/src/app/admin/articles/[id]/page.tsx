@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import MediaPickerModal from '@/components/editor/MediaPickerModal'
 import { renderArticleContent } from '@/utils/articleContent'
 import { getApiErrorMessage } from '@/utils/apiError'
-import { parseMetaKeywords } from '@/utils/articleForm'
+import { parseMetaKeywords, parseTagNames, toDateTimeLocalValue, toIsoDateTime } from '@/utils/articleForm'
 
 const RichEditor = dynamic(() => import('@/components/editor/RichEditor'), {
   ssr: false,
@@ -92,6 +92,7 @@ export default function EditArticlePage() {
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [uploadingFeatured, setUploadingFeatured] = useState(false)
+  const [suggestingKeywords, setSuggestingKeywords] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit')
   const [showFeaturedImagePicker, setShowFeaturedImagePicker] = useState(false)
@@ -106,6 +107,8 @@ export default function EditArticlePage() {
     metaTitle: '',
     metaDescription: '',
     metaKeywords: '',
+    tagNames: '',
+    scheduledFor: '',
     categoryIds: [] as string[],
     isFeatured: false,
     isPinned: false,
@@ -165,6 +168,8 @@ export default function EditArticlePage() {
               metaTitle: art.metaTitle || '',
               metaDescription: art.metaDescription || '',
               metaKeywords: art.metaKeywords ? art.metaKeywords.join(', ') : '',
+              tagNames: art.tags ? art.tags.map((tag: any) => tag.name).join(', ') : '',
+              scheduledFor: toDateTimeLocalValue(art.scheduledFor),
               categoryIds: art.categories ? art.categories.map((c: any) => c.id) : [],
               isFeatured: art.isFeatured || false,
               isPinned: art.isPinned || false,
@@ -235,9 +240,11 @@ export default function EditArticlePage() {
     }
   }
 
-  const handleSubmit = async (status: 'draft' | 'published') => {
+  const handleSubmit = async (status: 'draft' | 'published' | 'scheduled') => {
     if (!form.title.trim()) return toast.error('Title is required')
     if (!form.content.trim()) return toast.error('Content is required')
+    const scheduledFor = status === 'scheduled' ? toIsoDateTime(form.scheduledFor) : null
+    if (status === 'scheduled' && !scheduledFor) return toast.error('Choose a valid publish date and time')
     setSaving(true)
     try {
       await saveFeaturedImageMetadata()
@@ -245,21 +252,42 @@ export default function EditArticlePage() {
       const payload = {
         ...form,
         status,
+        scheduledFor,
         featuredImageId: featuredImage?.id || null, 
-        metaKeywords: parseMetaKeywords(form.metaKeywords)
+        metaKeywords: parseMetaKeywords(form.metaKeywords),
+        tagNames: parseTagNames(form.tagNames)
       }
       // Send PUT request to update existing article
       const res = await api.put(`/articles/${id}`, payload)
       if (res.data.success) {
         localStorage.removeItem(`pulse_article_draft_${id}`)
         localStorage.removeItem(`pulse_article_draft_image_${id}`)
-        toast.success(status === 'published' ? 'Article updated and published' : 'Article changes saved')
+        toast.success(status === 'published' ? 'Article updated and published' : status === 'scheduled' ? 'Article scheduled' : 'Article changes saved')
         router.push('/admin/articles')
       }
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, 'Failed to update article'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const suggestKeywords = async () => {
+    if (!form.title.trim() && !form.content.trim()) return toast.error('Add a title or content first')
+    setSuggestingKeywords(true)
+    try {
+      const res = await api.post('/seo/suggest-keywords', { title: form.title, content: form.content })
+      if (res.data.success) {
+        const existing = parseMetaKeywords(form.metaKeywords)
+        const suggestions = (res.data.data || []).map((item: any) => item.keyword).filter(Boolean)
+        const nextKeywords = Array.from(new Set([...existing, ...suggestions])).slice(0, 15)
+        setForm(prev => ({ ...prev, metaKeywords: nextKeywords.join(', ') }))
+        toast.success('Keyword suggestions added')
+      }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not suggest keywords'))
+    } finally {
+      setSuggestingKeywords(false)
     }
   }
 
@@ -299,6 +327,14 @@ export default function EditArticlePage() {
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition duration-150 text-sm font-medium bg-white text-gray-700 disabled:opacity-50"
           >
             Save Changes (Draft)
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSubmit('scheduled')}
+            disabled={saving}
+            className="px-4 py-2 border border-amber-200 rounded-lg hover:bg-amber-50 transition duration-150 text-sm font-medium bg-white text-amber-700 disabled:opacity-50"
+          >
+            Schedule
           </button>
           <button
             type="button"
@@ -450,7 +486,17 @@ export default function EditArticlePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Keywords</label>
+                  <div className="flex items-center justify-between gap-3 mb-1">
+                    <label className="block text-sm font-semibold text-gray-700">Keywords</label>
+                    <button
+                      type="button"
+                      onClick={suggestKeywords}
+                      disabled={suggestingKeywords}
+                      className="text-xs font-bold text-green-700 hover:text-green-800 disabled:opacity-50"
+                    >
+                      {suggestingKeywords ? 'Suggesting...' : 'Suggest'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={form.metaKeywords}
@@ -458,6 +504,18 @@ export default function EditArticlePage() {
                     placeholder="news, sports, technology (separate with commas)"
                     className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Public Tags</label>
+                  <input
+                    type="text"
+                    value={form.tagNames}
+                    onChange={(e) => setForm(prev => ({ ...prev, tagNames: e.target.value }))}
+                    placeholder="kendrick lamar, gen z music, pop culture"
+                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
+                  />
+                  <p className="mt-1 text-xs text-gray-400">Tags become public topic pages and help cluster related stories.</p>
                 </div>
               </div>
 
@@ -635,6 +693,17 @@ export default function EditArticlePage() {
                   <span>Include in Global RSS Feeds</span>
                 </label>
               </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Publish Schedule</h3>
+              <input
+                type="datetime-local"
+                value={form.scheduledFor}
+                onChange={(e) => setForm(prev => ({ ...prev, scheduledFor: e.target.value }))}
+                className="w-full p-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:outline-none text-black"
+              />
+              <p className="mt-2 text-xs text-gray-400">Use the Schedule button to queue this article for automatic publishing.</p>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
