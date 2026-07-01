@@ -4,10 +4,11 @@ import JsonLd from '@/components/JsonLd'
 import SiteAnalyticsTracker from '@/components/SiteAnalyticsTracker'
 import ToastProvider from '@/components/ToastProvider'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
+import { getSiteUrl } from '@/utils/siteUrl'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = 'G-WSWVPG42ZF'
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
+const SITE_URL = getSiteUrl()
 const RSS_FEED_URL = `${SITE_URL}/api/rss/feed`
 
 export const metadata: Metadata = {
@@ -86,6 +87,22 @@ export default function RootLayout({
       <head>
         <link rel="alternate" type="application/rss+xml" title="PulseToob RSS Feed" href={RSS_FEED_URL} />
         <JsonLd data={siteSchema} />
+        <Script id="google-consent-mode" strategy="beforeInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: 'denied',
+              functionality_storage: 'granted',
+              personalization_storage: 'denied',
+              security_storage: 'granted',
+              wait_for_update: 500
+            });
+          `}
+        </Script>
         <Script
           id="secureprivacy-banner"
           src="https://app.secureprivacy.ai/script/6a427b4c50650fd51e3e920f.js"
@@ -98,8 +115,6 @@ export default function RootLayout({
         />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}');
           `}

@@ -74,14 +74,14 @@ export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps
   }
 
   if (loading) {
-    return <div className={`ad-placeholder loading ${slot}`} aria-hidden="true" />
+    return <div className={`ad-placeholder loading ${slot}`} aria-hidden="true" data-ad-slot={slot} />
   }
 
   if (ad) {
     const formattedImageUrl = getImageUrl(ad.imageUrl)
 
     return (
-      <div className={`direct-ad-container ${slot}`}>
+      <div className={`direct-ad-container ${slot}`} role="complementary" aria-label="Sponsored placement" data-ad-slot={slot}>
         <span className="ad-badge">Sponsored</span>
         <a href={ad.targetUrl} target="_blank" rel="noopener noreferrer sponsored" onClick={handleAdClick}>
           <div className="ad-image-wrapper">
@@ -94,7 +94,7 @@ export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps
 
   if (adsenseClient && adsenseSlot) {
     return (
-      <div className={`adsense-ad-container ${slot}`}>
+      <div className={`adsense-ad-container ${slot}`} role="complementary" aria-label="Advertisement" data-ad-slot={slot}>
         <span className="ad-badge">Advertisement</span>
         <ins
           className="adsbygoogle"

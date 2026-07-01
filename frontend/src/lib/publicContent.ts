@@ -1,5 +1,6 @@
 import { getApiBaseUrl } from '@/utils/apiBase'
 import { getImageUrl as resolveImageUrl } from '@/utils/imageUrl'
+import { getSiteUrl as resolveSiteUrl } from '@/utils/siteUrl'
 import type { ApiResponse, Category, MediaAsset, Pagination, UserSummary } from '@/types/cms'
 
 export interface PublicTag {
@@ -58,9 +59,7 @@ export class PublicContentFetchError extends Error {
   }
 }
 
-export function getSiteUrl() {
-  return (process.env.NEXT_PUBLIC_SITE_URL || 'https://www.pulsetoob.com').replace(/\/+$/, '')
-}
+export { getSiteUrl } from '@/utils/siteUrl'
 
 async function fetchJson<T>(
   path: string,
@@ -158,7 +157,7 @@ export async function getRelatedArticles(articleId: string, options: { limit?: n
 }
 
 export function getArticleUrl(article: Pick<PublicArticle, 'slug'>) {
-  return `${getSiteUrl()}/article/${article.slug}`
+  return `${resolveSiteUrl()}/article/${article.slug}`
 }
 
 export function getAuthorPath(author?: Pick<UserSummary, 'id'> | null) {
@@ -167,7 +166,7 @@ export function getAuthorPath(author?: Pick<UserSummary, 'id'> | null) {
 
 export function getAuthorUrl(author?: Pick<UserSummary, 'id'> | null) {
   const path = getAuthorPath(author)
-  return path ? `${getSiteUrl()}${path}` : null
+  return path ? `${resolveSiteUrl()}${path}` : null
 }
 
 export function getFeaturedImageUrl(featuredImage?: PublicArticle['featuredImage']) {
