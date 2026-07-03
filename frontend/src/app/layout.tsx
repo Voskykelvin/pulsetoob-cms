@@ -54,6 +54,9 @@ export const metadata: Metadata = {
     title: 'PulseToob',
     description: 'Breaking stories, entertainment, lifestyle and trending content',
   },
+  other: {
+    'google-adsense-account': ADSENSE_CLIENT,
+  },
 }
 
 const siteSchema = [

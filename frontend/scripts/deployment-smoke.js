@@ -1,7 +1,9 @@
 const DEFAULT_SITE_URL = 'https://www.pulsetoob.com';
 const DEFAULT_API_URL = 'https://pulsetoob-cms.onrender.com';
+const ADSENSE_CLIENT = 'ca-pub-1646346199767276';
 const ADSENSE_PUBLISHER_ID = 'pub-1646346199767276';
 const ADS_TXT_LINE = `google.com, ${ADSENSE_PUBLISHER_ID}, DIRECT, f08c47fec0942fa0`;
+const ADSENSE_SCRIPT_URL = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
 const NEWS_WINDOW_MS = 48 * 60 * 60 * 1000;
 const MAX_NEWS_URLS = 1000;
 
@@ -12,12 +14,14 @@ const checks = [
   {
     name: 'Homepage',
     url: `${siteUrl}/`,
-    includes: ['PulseToob', 'G-WSWVPG42ZF', 'secureprivacy', 'google-consent-mode', 'pagead2.googlesyndication.com'],
+    includes: ['PulseToob', 'G-WSWVPG42ZF', 'secureprivacy', 'google-consent-mode', ADSENSE_SCRIPT_URL],
     validate: validateHomepage,
   },
   { name: 'Blog', url: `${siteUrl}/blog`, includes: ['All Stories'] },
   { name: 'Search', url: `${siteUrl}/search`, includes: ['Search PulseToob'] },
-  { name: 'Privacy', url: `${siteUrl}/privacy`, includes: ['Privacy Policy'] },
+  { name: 'About', url: `${siteUrl}/about`, includes: ['About PulseToob', 'Editorial Independence', 'Corrections', 'Privacy'] },
+  { name: 'Contact', url: `${siteUrl}/contact`, includes: ['Contact Form', 'Direct Email', 'Advertising'] },
+  { name: 'Privacy', url: `${siteUrl}/privacy`, includes: ['Privacy Policy', 'Google Analytics', 'Google AdSense', 'Cookies And Consent'] },
   { name: 'Sitemap', url: `${siteUrl}/sitemap.xml`, includes: ['urlset'] },
   { name: 'News sitemap', url: `${siteUrl}/news-sitemap.xml`, includes: ['urlset', 'xmlns:news'], validate: validateNewsSitemap },
   { name: 'Robots', url: `${siteUrl}/robots.txt`, includes: ['Sitemap'], validate: validateRobots },
@@ -50,6 +54,8 @@ function assertIncludes(text, expected, checkName) {
 }
 
 function validateHomepage({ text }) {
+  assertIncludes(text, `name="google-adsense-account"`, 'Homepage AdSense account meta tag');
+  assertIncludes(text, `content="${ADSENSE_CLIENT}"`, 'Homepage AdSense account meta tag');
   assertIncludes(text, 'ad_storage', 'Homepage consent defaults');
   assertIncludes(text, 'analytics_storage', 'Homepage consent defaults');
   assertIncludes(text, 'ad_user_data', 'Homepage consent defaults');
