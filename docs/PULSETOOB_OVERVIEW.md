@@ -156,6 +156,8 @@ PulseToob now has several data-related systems active or available:
 - SecurePrivacy privacy banner script.
 - IndexNow submission support for article publish, update, unpublish, delete, bulk publish/status changes, and scheduled publishing once `INDEXNOW_KEY` is configured in Render and Vercel.
 
+The current newsletter feature is a subscriber collection system, not a full email sending system. Public forms save subscriber email addresses and the admin audience page can review/copy them, but PulseToob does not yet send confirmation emails, newsletters, digests, unsubscribe links, or delivery analytics.
+
 Because analytics, ads, contact forms, and newsletter forms all process visitor or submitted data, PulseToob should keep a privacy-aware operating posture even if the site does not collect sensitive personal data.
 
 Important follow-up:
@@ -263,7 +265,34 @@ After backend deployment:
 
 - Improve mobile article typography and spacing.
 - Add a persistent cookie preference entry point if SecurePrivacy does not provide one directly.
-- Add newsletter provider integration if the list grows beyond basic storage.
+
+### Newsletter And Email
+
+Goal: turn the existing subscriber storage into a real newsletter system with confirmed subscribers, compliant unsubscribe handling, provider-backed sending, and admin-controlled campaigns.
+
+Recommended v1 direction:
+
+- Use Resend as the first email provider unless a different provider is chosen later.
+- Add DNS-backed sender authentication for `pulsetoob.com`: SPF, DKIM, and DMARC.
+- Create a sender identity such as `newsletter@pulsetoob.com`.
+- Expand `NewsletterSubscriber` with confirmation and delivery fields: `pending`, `active`, `unsubscribed`, `bounced`, `confirmedAt`, `confirmationToken`, `unsubscribeToken`, `providerContactId`, and `lastEmailSentAt`.
+- Add double opt-in: signup creates a pending subscriber, sends a confirmation email, and activates only after the confirmation link is opened.
+- Add unsubscribe routes and pages, including one-click unsubscribe support for bulk email compliance.
+- Add a reusable PulseToob email template with logo/name, article cards, footer, privacy link, unsubscribe link, and sender contact details.
+- Add admin controls for sending a test email and sending a newsletter to active subscribers.
+- Add `NewsletterCampaign` and `NewsletterDelivery` records for subject, preview text, body, status, recipient counts, provider IDs, errors, and sent timestamps.
+- Add campaign status states: `draft`, `scheduled`, `sending`, `sent`, `failed`, and `cancelled`.
+- Keep the existing admin audience page, but evolve it from copy-only subscriber management into campaign and delivery management.
+
+Recommended v2 direction:
+
+- Add scheduled newsletter sends.
+- Add weekly digest generation from recently published articles.
+- Add provider webhooks for bounce, complaint, unsubscribe, delivered, opened, and clicked events where available.
+- Add engagement reporting in the admin audience dashboard.
+- Add segmentation by signup source, category interest, and engagement.
+- Add suppression handling so unsubscribed, bounced, and complained addresses are never mailed.
+- Add rate limiting and queued sending so larger lists do not overload the backend or provider API.
 
 ### Admin And Operations
 
@@ -290,3 +319,24 @@ After backend deployment:
 - Push changes to GitHub to trigger Vercel and Render redeploys.
 - Use Vercel for frontend redeploys and Render for backend redeploys.
 - Update this document whenever production behavior, integrations, services, or editorial workflow changes.
+
+### Traffic Surge Notes
+
+PulseToob has a basic traffic-hardening layer for reader spikes:
+
+- Public pages are served through Vercel with Next.js revalidation, so cached homepage/article traffic should mostly avoid the Render backend.
+- Backend analytics events are queued and flushed in batches instead of writing every visitor event synchronously.
+- Article view counters and direct ad impression/click counters are aggregated before database increments.
+- Backend health responses expose analytics and ad metric queue stats for early overload visibility.
+- Analytics, ad, public form, auth, and general API traffic have separate rate limits.
+- Direct ad lookups send short cache headers and the frontend no longer forces `no-store` for ad lookup requests.
+- Database indexes exist for common analytics and public article lookup patterns.
+
+Important traffic-related environment knobs:
+
+- `ANALYTICS_QUEUE_ENABLED`, `ANALYTICS_QUEUE_MAX`, `ANALYTICS_FLUSH_INTERVAL_MS`, `ANALYTICS_FLUSH_BATCH_SIZE`, `ANALYTICS_SAMPLE_RATE`
+- `AD_METRICS_QUEUE_ENABLED`, `AD_METRICS_QUEUE_MAX`, `AD_METRICS_FLUSH_INTERVAL_MS`
+- `ANALYTICS_RATE_LIMIT_MAX`, `AD_RATE_LIMIT_MAX`, `PUBLIC_WRITE_RATE_LIMIT_MAX`
+- `DB_POOL_MAX`, `JSON_BODY_LIMIT`, `FORM_BODY_LIMIT`, `HTTP_REQUEST_LOGS`
+
+Do not claim 1,000 concurrent-user readiness until a controlled load test has been run against production-like Render, Neon, and Vercel settings. Test in stages such as 100, 250, 500, and 1,000 virtual users, watching response times, Render CPU/memory, Neon connection counts, queue backlogs, error rates, and 429/503 responses.

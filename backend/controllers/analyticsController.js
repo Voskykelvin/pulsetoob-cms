@@ -1,5 +1,6 @@
 const { Analytics, Article, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const analyticsBufferService = require('../services/analyticsBufferService');
 
 const VIEW_EVENT_TYPES = ['page_view', 'article_view'];
 const ANALYTICS_EVENT_TYPES = ['page_view', 'article_view', 'share', 'click', 'scroll', 'time_on_page', 'bounce'];
@@ -19,7 +20,7 @@ class AnalyticsController {
 
       if (!safeEventType) return res.status(202).json({ success: true });
 
-      await Analytics.create({
+      analyticsBufferService.enqueue({
         articleId: articleId || null,
         eventType: safeEventType,
         sessionId: truncate(sessionId, 255),
@@ -35,13 +36,9 @@ class AnalyticsController {
         metadata: req.body.metadata || {},
       });
 
-      if (safeEventType === 'article_view' && articleId) {
-        await Article.increment('views', { where: { id: articleId } });
-      }
-
-      res.status(201).json({ success: true });
+      res.status(202).json({ success: true });
     } catch (error) {
-      res.status(201).json({ success: true });
+      res.status(202).json({ success: true });
     }
   }
 

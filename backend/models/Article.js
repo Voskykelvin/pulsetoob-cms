@@ -57,6 +57,9 @@ const Article = sequelize.define('Article', {
     { fields: ['status'] },
     { fields: ['authorId'] },
     { fields: ['publishedAt'] },
+    { name: 'articles_status_published_at_idx', fields: ['status', 'publishedAt'] },
+    { name: 'articles_status_featured_published_at_idx', fields: ['status', 'isFeatured', 'publishedAt'] },
+    { name: 'articles_status_pinned_published_at_idx', fields: ['status', 'isPinned', 'publishedAt'] },
     { fields: ['isFeatured'] },
   ],
 });

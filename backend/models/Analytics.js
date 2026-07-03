@@ -22,6 +22,12 @@ const Analytics = sequelize.define('Analytics', {
 }, {
   timestamps: true,
   tableName: 'Analytics',
+  indexes: [
+    { name: 'analytics_event_type_created_at_idx', fields: ['eventType', 'createdAt'] },
+    { name: 'analytics_article_event_created_at_idx', fields: ['articleId', 'eventType', 'createdAt'] },
+    { name: 'analytics_visitor_created_at_idx', fields: ['visitorId', 'createdAt'] },
+    { name: 'analytics_session_created_at_idx', fields: ['sessionId', 'createdAt'] },
+  ],
 });
 
 module.exports = Analytics;

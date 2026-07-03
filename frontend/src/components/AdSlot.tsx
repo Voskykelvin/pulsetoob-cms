@@ -33,7 +33,6 @@ export default function AdSlot({ slot, adsenseClient, adsenseSlot }: AdSlotProps
 
       try {
         const res = await fetch(`${API_URL}/ads/${slot}`, {
-          cache: 'no-store',
           signal: controller.signal,
         })
         const result = await res.json() as ApiResponse<Advertisement | null>

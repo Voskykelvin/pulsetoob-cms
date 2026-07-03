@@ -20,6 +20,9 @@ const analyticsRoutes = require('./routes/analytics');
 const adminRoutes = require('./routes/admin');
 const adRoutes = require('./routes/ads');
 const publicRoutes = require('./routes/public');
+const analyticsBufferService = require('./services/analyticsBufferService');
+const adMetricsBufferService = require('./services/adMetricsBufferService');
+const trafficIndexService = require('./services/trafficIndexService');
 
 const app = express();
 const startedAt = new Date();
@@ -60,6 +63,10 @@ function getHealthPayload() {
     timestamp: new Date().toISOString(),
     database: dbState.ready ? 'ready' : 'initializing',
     databaseCheckedAt: dbState.lastCheckedAt,
+    queues: {
+      analytics: analyticsBufferService.getStats(),
+      ads: adMetricsBufferService.getStats(),
+    },
   };
 }
 
@@ -99,6 +106,27 @@ const generalLimiter = rateLimit({
   skip: (req) => req.path === '/health' || req.path === '/ready',
   handler: rateLimitHandler('RATE_LIMITED', 'Too many requests. Please try again shortly.'),
 });
+const analyticsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: getPositiveIntegerEnv('ANALYTICS_RATE_LIMIT_MAX', 240),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler('ANALYTICS_RATE_LIMITED', 'Too many analytics events. Please slow down.'),
+});
+const adLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: getPositiveIntegerEnv('AD_RATE_LIMIT_MAX', 300),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler('AD_RATE_LIMITED', 'Too many ad requests. Please slow down.'),
+});
+const publicWriteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: getPositiveIntegerEnv('PUBLIC_WRITE_RATE_LIMIT_MAX', 60),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler('PUBLIC_WRITE_RATE_LIMITED', 'Too many submissions. Please try again later.'),
+});
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 50,
@@ -108,9 +136,11 @@ const authLimiter = rateLimit({
 });
 app.use(generalLimiter);
 app.use(compression());
-app.use(morgan('dev'));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+if (process.env.NODE_ENV !== 'production' || process.env.HTTP_REQUEST_LOGS === 'true') {
+  app.use(morgan('dev'));
+}
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '5mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.FORM_BODY_LIMIT || '5mb' }));
 
 const allowedOrigins = [
   'https://pulsetoob.com',
@@ -155,10 +185,10 @@ app.use('/api/seo', seoRoutes);
 app.use('/api/rss', rssRoutes);
 app.use('/api/msn', msnRoutes);
 app.use('/api/backlinks', backlinkRoutes);
-app.use('/api/analytics', analyticsRoutes);
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/ads', adRoutes);
-app.use('/api/public', publicRoutes);
+app.use('/api/ads', adLimiter, adRoutes);
+app.use('/api/public', publicWriteLimiter, publicRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 app.use((err, req, res, next) => res.status(err.statusCode || 500).json({
@@ -192,6 +222,13 @@ const initializeDatabase = async () => {
       await withTimeout(sequelize.sync(syncOptions), DB_INIT_TIMEOUT_MS, 'Database sync');
       console.log(process.env.DB_SYNC_ALTER === 'true' ? 'Database synced with alter' : 'Database synced');
 
+      try {
+        await withTimeout(trafficIndexService.ensureIndexes(), DB_INIT_TIMEOUT_MS, 'Traffic index check');
+        console.log('Traffic hardening indexes checked');
+      } catch (indexError) {
+        console.warn('Traffic hardening index check did not complete:', indexError.message);
+      }
+
       dbState.ready = true;
       dbState.initializedAt = new Date().toISOString();
       dbState.lastError = null;
@@ -212,5 +249,22 @@ const startServer = () => {
 };
 
 startServer();
+
+const gracefulShutdown = async (signal) => {
+  console.log(`${signal} received, flushing traffic buffers before exit...`);
+  try {
+    await Promise.all([
+      analyticsBufferService.flushAll(),
+      adMetricsBufferService.flushAll(),
+    ]);
+  } catch (error) {
+    console.error('Failed to flush traffic buffers during shutdown:', error);
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 module.exports = app;

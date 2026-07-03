@@ -1,6 +1,7 @@
 const { Advertisement, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
+const adMetricsBufferService = require('../services/adMetricsBufferService');
 
 const activeWindowWhere = () => {
   const now = new Date();
@@ -18,6 +19,8 @@ class AdController {
   async getActiveAd(req, res) {
     try {
       const { slot } = req.params;
+      res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+
       const ad = await Advertisement.findOne({
         where: { slot, ...activeWindowWhere() },
         order: sequelize.random(),
@@ -31,11 +34,8 @@ class AdController {
 
   async trackImpression(req, res) {
     try {
-      const ad = await Advertisement.findByPk(req.params.id);
-      if (!ad) return sendError(res, { status: 404, message: 'Advertisement not found' });
-
-      await ad.increment('impressions');
-      return sendSuccess(res, { message: 'Impression tracked' });
+      adMetricsBufferService.trackImpression(req.params.id);
+      return sendSuccess(res, { status: 202, message: 'Impression accepted' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to track impression' });
     }
@@ -43,11 +43,8 @@ class AdController {
 
   async trackClick(req, res) {
     try {
-      const ad = await Advertisement.findByPk(req.params.id);
-      if (!ad) return sendError(res, { status: 404, message: 'Advertisement not found' });
-
-      await ad.increment('clicks');
-      return sendSuccess(res, { message: 'Click tracked' });
+      adMetricsBufferService.trackClick(req.params.id);
+      return sendSuccess(res, { status: 202, message: 'Click accepted' });
     } catch (error) {
       return sendError(res, { status: 500, message: 'Failed to track click' });
     }
