@@ -24,7 +24,7 @@ import {
   type PublicArticle,
 } from '@/lib/publicContent'
 
-export const revalidate = 60
+export const revalidate = 15
 
 const ADSENSE_HEADER_SLOT = process.env.NEXT_PUBLIC_ADSENSE_HEADER_SLOT
 const ADSENSE_IN_ARTICLE_SLOT = process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT
@@ -88,6 +88,19 @@ const renderStyles = `
   .ProseMirror-rendered h2 { font-size: 1.8rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.5rem; }
   .ProseMirror-rendered h3 { font-size: 1.5rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
   .ProseMirror-rendered h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+  .ProseMirror-rendered a.backlink-highlight {
+    color: #14532d;
+    background: #dcfce7;
+    border-bottom: 2px solid #22c55e;
+    border-radius: 3px;
+    padding: 0 0.12em;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .ProseMirror-rendered a.backlink-highlight:hover {
+    color: #052e16;
+    background: #bbf7d0;
+  }
 `
 
 function getArticleSchema(article: PublicArticle) {
@@ -314,7 +327,7 @@ export default async function ArticlePage({
 
           <article
             className="ProseMirror-rendered max-w-none text-gray-900 leading-relaxed text-base md:text-lg space-y-6"
-            dangerouslySetInnerHTML={{ __html: renderArticleContent(article.content) }}
+            dangerouslySetInnerHTML={{ __html: renderArticleContent(article.content, article.backlinks) }}
           />
 
           {article.tags?.length ? (

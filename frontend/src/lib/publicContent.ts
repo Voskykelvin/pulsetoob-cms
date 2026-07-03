@@ -9,6 +9,18 @@ export interface PublicTag {
   slug: string
 }
 
+export interface PublicBacklink {
+  id: string
+  url: string
+  anchorText: string
+  targetUrl?: string | null
+  type?: 'internal' | 'external' | 'affiliate' | 'sponsored'
+  relationship?: 'dofollow' | 'nofollow' | 'ugc' | 'sponsored'
+  position?: 'content' | 'sidebar' | 'footer' | 'author_bio'
+  isActive?: boolean
+  isBroken?: boolean
+}
+
 export interface PublicArticle {
   id: string
   title: string
@@ -37,6 +49,7 @@ export interface PublicArticle {
   categories?: Category[]
   featuredImage?: MediaAsset | string | null
   tags?: PublicTag[]
+  backlinks?: PublicBacklink[]
 }
 
 interface ArticleListResponse extends ApiResponse<PublicArticle[]> {
