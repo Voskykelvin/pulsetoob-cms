@@ -1,4 +1,4 @@
-const { body } = require('express-validator');
+const { body, param } = require('express-validator');
 
 const contactTopics = ['collaboration', 'advertising', 'correction', 'story_tip', 'general'];
 
@@ -18,7 +18,12 @@ const contactRules = [
     .withMessage('Please confirm the contact disclaimer'),
 ];
 
+const authorParamRules = [
+  param('id').isUUID().withMessage('Author id must be a valid UUID'),
+];
+
 module.exports = {
+  authorParamRules,
   contactRules,
   newsletterRules,
 };

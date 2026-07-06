@@ -1,14 +1,64 @@
 const sanitizeHtml = require('sanitize-html');
-const { ContactMessage, NewsletterSubscriber } = require('../models');
+const { Op } = require('sequelize');
+const { Article, ContactMessage, NewsletterSubscriber, User } = require('../models');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 
 const CONTACT_EMAIL = 'kelvinvosky2@gmail.com';
+const PUBLIC_AUTHOR_ROLES = ['super_admin', 'admin', 'editor', 'author', 'contributor'];
 
 function cleanText(value) {
   return sanitizeHtml(String(value || ''), { allowedTags: [], allowedAttributes: {} }).trim();
 }
 
+function getPublicSocialLinks(socialLinks = {}) {
+  return Object.fromEntries(
+    Object.entries(socialLinks || {}).filter(([, value]) => typeof value === 'string' && value.trim())
+  );
+}
+
 class PublicController {
+  async getAuthor(req, res) {
+    try {
+      const author = await User.findOne({
+        where: {
+          id: req.params.id,
+          isActive: true,
+          role: { [Op.in]: PUBLIC_AUTHOR_ROLES },
+        },
+        attributes: ['id', 'username', 'firstName', 'lastName', 'avatar', 'bio', 'socialLinks', 'createdAt', 'updatedAt'],
+      });
+
+      if (!author) return sendError(res, { status: 404, message: 'Author not found' });
+
+      const [publishedArticleCount, latestArticle] = await Promise.all([
+        Article.count({ where: { authorId: author.id, status: 'published' } }),
+        Article.findOne({
+          where: { authorId: author.id, status: 'published' },
+          attributes: ['publishedAt', 'createdAt'],
+          order: [['publishedAt', 'DESC'], ['createdAt', 'DESC']],
+        }),
+      ]);
+
+      return sendSuccess(res, {
+        data: {
+          id: author.id,
+          username: author.username,
+          firstName: author.firstName,
+          lastName: author.lastName,
+          avatar: author.avatar,
+          bio: author.bio,
+          socialLinks: getPublicSocialLinks(author.socialLinks),
+          publishedArticleCount,
+          latestArticleAt: latestArticle?.publishedAt || latestArticle?.createdAt || null,
+          createdAt: author.createdAt,
+          updatedAt: author.updatedAt,
+        },
+      });
+    } catch (error) {
+      return sendError(res, { status: 500, message: 'Could not load author profile' });
+    }
+  }
+
   async subscribe(req, res) {
     try {
       const email = cleanText(req.body.email).toLowerCase();

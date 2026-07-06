@@ -28,6 +28,23 @@ export interface MediaAsset {
   optimized?: boolean
 }
 
+export interface UserAvatar {
+  url?: string | null
+  thumbnailUrl?: string | null
+  thumbnailSmall?: string | null
+  thumbnailMedium?: string | null
+  thumbnailLarge?: string | null
+  altText?: string | null
+}
+
+export interface SocialLinks {
+  twitter?: string | null
+  linkedin?: string | null
+  facebook?: string | null
+  instagram?: string | null
+  website?: string | null
+}
+
 export interface Category {
   id: string
   name: string
@@ -61,8 +78,11 @@ export interface UserSummary {
   username: string
   firstName?: string | null
   lastName?: string | null
-  avatar?: string | null
+  avatar?: string | UserAvatar | null
   bio?: string | null
+  socialLinks?: SocialLinks | null
+  publishedArticleCount?: number
+  latestArticleAt?: string | null
 }
 
 export interface Tag {
@@ -79,7 +99,9 @@ export interface CmsUser extends UserSummary {
   isActive: boolean
   isVerified: boolean
   createdAt: string
+  updatedAt?: string
   lastLogin?: string | null
+  preferences?: Record<string, unknown>
 }
 
 export interface Article {

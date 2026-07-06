@@ -9,7 +9,7 @@ import PublicImage from '@/components/PublicImage'
 import RelatedPosts from '@/components/RelatedPosts'
 import ShareButtons from '@/components/ShareButtons'
 import { ADSENSE_CLIENT } from '@/utils/adsense'
-import { getAuthorInitials, getAuthorName } from '@/utils/author'
+import { getAuthorAvatarUrl, getAuthorInitials, getAuthorName } from '@/utils/author'
 import { renderArticleContent } from '@/utils/articleContent'
 import {
   getArticleDescription,
@@ -108,6 +108,7 @@ function getArticleSchema(article: PublicArticle) {
   const imageUrl = getFeaturedImageUrl(article.featuredImage)
   const description = getArticleDescription(article)
   const authorUrl = getAuthorUrl(article.author)
+  const authorAvatarUrl = getAuthorAvatarUrl(article.author)
 
   return {
     '@context': 'https://schema.org',
@@ -125,6 +126,7 @@ function getArticleSchema(article: PublicArticle) {
       '@type': 'Person',
       name: getAuthorName(article.author, 'PulseToob Staff'),
       url: authorUrl || undefined,
+      image: authorAvatarUrl || undefined,
     },
     publisher: {
       '@type': 'Organization',
@@ -223,6 +225,7 @@ export default async function ArticlePage({
   const articleDescription = getArticleDescription(article)
   const authorPath = getAuthorPath(article.author)
   const authorName = getAuthorName(article.author, 'PulseToob Staff')
+  const authorAvatarUrl = getAuthorAvatarUrl(article.author)
   const relatedArticles = await getRelatedArticles(article.id, { limit: 3 })
   const schema = getArticleSchema(article)
   const breadcrumbSchema = getArticleBreadcrumbSchema(article)
@@ -299,8 +302,17 @@ export default async function ArticlePage({
           )}
 
           <div className="flex items-center gap-3 border-b border-gray-200 pb-8 mb-8 text-sm text-gray-500">
-            <div className="w-10 h-10 rounded-full bg-green-50 text-green-700 border border-green-100 flex items-center justify-center font-bold">
-              {getAuthorInitials(article.author)}
+            <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-green-100 bg-green-50 font-bold text-green-700">
+              {authorAvatarUrl ? (
+                <PublicImage
+                  src={authorAvatarUrl}
+                  alt={`${authorName} profile photo`}
+                  sizes="40px"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                getAuthorInitials(article.author)
+              )}
             </div>
             <div>
               <span className="block font-bold text-gray-900">
@@ -339,6 +351,45 @@ export default async function ArticlePage({
               ))}
             </div>
           ) : null}
+
+          {article.author && (
+            <section className="mt-10 rounded-lg border border-gray-200 bg-white p-5">
+              <div className="flex gap-4">
+                <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-green-100 bg-green-50 text-lg font-extrabold text-green-700">
+                  {authorAvatarUrl ? (
+                    <PublicImage
+                      src={authorAvatarUrl}
+                      alt={`${authorName} profile photo`}
+                      sizes="64px"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    getAuthorInitials(article.author)
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-green-700">About the Author</p>
+                  <h2 className="mt-1 text-lg font-extrabold text-gray-950">
+                    {authorPath ? (
+                      <Link href={authorPath} className="hover:text-green-700 hover:underline">
+                        {authorName}
+                      </Link>
+                    ) : (
+                      authorName
+                    )}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                    {article.author.bio || `Read more reporting and editorial updates from ${authorName} on PulseToob.`}
+                  </p>
+                  {authorPath && (
+                    <Link href={authorPath} className="mt-3 inline-block text-sm font-bold text-green-700 hover:text-green-900 hover:underline">
+                      More from {authorName}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
 
           <ShareButtons
             articleId={article.id}

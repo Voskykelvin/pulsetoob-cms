@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getAuthorName } from '@/utils/author'
+import { getAuthorAvatarUrl, getAuthorInitials, getAuthorName } from '@/utils/author'
 import PublicImage from '@/components/PublicImage'
 import {
   getAuthorPath,
@@ -34,6 +34,7 @@ export default function PublicArticleCard({ article }: { article: PublicArticle 
   const categoryTheme = getCatTheme(category?.name)
   const authorPath = getAuthorPath(article.author)
   const authorName = getAuthorName(article.author)
+  const authorAvatarUrl = getAuthorAvatarUrl(article.author)
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:shadow">
@@ -66,15 +67,29 @@ export default function PublicArticleCard({ article }: { article: PublicArticle 
           </h2>
           <p className="line-clamp-2 text-xs text-gray-500">{article.excerpt}</p>
         </div>
-        <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-[11px] font-semibold text-gray-400">
-          {authorPath ? (
-            <Link href={authorPath} className="hover:text-green-700 hover:underline">
-              {authorName}
-            </Link>
-          ) : (
-            <span>{authorName}</span>
-          )}
-          <span>{article.readTime || 5} min</span>
+        <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-3 text-[11px] font-semibold text-gray-400">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full border border-green-100 bg-green-50 text-[10px] font-extrabold text-green-700">
+              {authorAvatarUrl ? (
+                <PublicImage
+                  src={authorAvatarUrl}
+                  alt={`${authorName} profile photo`}
+                  sizes="24px"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                getAuthorInitials(article.author)
+              )}
+            </div>
+            {authorPath ? (
+              <Link href={authorPath} className="truncate hover:text-green-700 hover:underline">
+                {authorName}
+              </Link>
+            ) : (
+              <span className="truncate">{authorName}</span>
+            )}
+          </div>
+          <span className="shrink-0">{article.readTime || 5} min</span>
         </div>
       </div>
     </article>

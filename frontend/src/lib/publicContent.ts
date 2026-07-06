@@ -52,6 +52,11 @@ export interface PublicArticle {
   backlinks?: PublicBacklink[]
 }
 
+export interface PublicAuthor extends UserSummary {
+  createdAt?: string
+  updatedAt?: string | null
+}
+
 interface ArticleListResponse extends ApiResponse<PublicArticle[]> {
   pagination?: Pagination
 }
@@ -140,6 +145,18 @@ export async function getPublicCategories() {
   } catch (error) {
     console.error('Failed to load public categories', error)
     return []
+  }
+}
+
+export async function getPublicAuthor(id: string) {
+  if (!id) return null
+
+  try {
+    const result = await fetchJson<ApiResponse<PublicAuthor>>(`/public/authors/${encodeURIComponent(id)}`)
+    return result?.success ? result.data : null
+  } catch (error) {
+    console.error('Failed to load public author', error)
+    return null
   }
 }
 

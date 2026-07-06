@@ -1,7 +1,14 @@
+import { getImageUrl } from './imageUrl'
+import type { UserAvatar } from '@/types/cms'
+
 export interface AuthorNameSource {
   username?: string | null
   firstName?: string | null
   lastName?: string | null
+}
+
+export interface AuthorAvatarSource {
+  avatar?: UserAvatar | string | null
 }
 
 export function cleanAuthorName(value?: string | null) {
@@ -27,4 +34,20 @@ export function getAuthorInitials(author?: AuthorNameSource | null, fallback = '
   const initials = words.length > 1 ? `${words[0][0]}${words[1][0]}` : name.slice(0, 2)
 
   return initials.toUpperCase()
+}
+
+export function getAuthorAvatarUrl(author?: AuthorAvatarSource | null) {
+  const avatar = author?.avatar
+  if (!avatar) return null
+
+  if (typeof avatar === 'string') return getImageUrl(avatar)
+
+  return getImageUrl(
+    avatar.thumbnailUrl ||
+    avatar.thumbnailMedium ||
+    avatar.thumbnailSmall ||
+    avatar.thumbnailLarge ||
+    avatar.url ||
+    null
+  )
 }
