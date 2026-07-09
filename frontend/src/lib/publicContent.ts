@@ -113,6 +113,12 @@ async function fetchJson<T>(
   }
 }
 
+function readResponseData<T>(result: ApiResponse<T> | null, context: string): T | null {
+  if (result === null) return null
+  if (result.success) return result.data
+  throw new PublicContentFetchError(`${context} API returned an unsuccessful response`)
+}
+
 export async function getPublicArticles(options: { limit?: number; category?: string; tag?: string; author?: string; search?: string; featured?: boolean; breaking?: boolean; pinned?: boolean } = {}) {
   const params = new URLSearchParams({
     limit: String(options.limit || 12),
@@ -129,35 +135,20 @@ export async function getPublicArticles(options: { limit?: number; category?: st
   if (typeof options.breaking === 'boolean') params.set('breaking', String(options.breaking))
   if (typeof options.pinned === 'boolean') params.set('pinned', String(options.pinned))
 
-  try {
-    const result = await fetchJson<ArticleListResponse>(`/articles?${params.toString()}`)
-    return result?.success ? result.data : []
-  } catch (error) {
-    console.error('Failed to load public articles', error)
-    return []
-  }
+  const result = await fetchJson<ArticleListResponse>(`/articles?${params.toString()}`)
+  return readResponseData(result, 'Public articles') ?? []
 }
 
 export async function getPublicCategories() {
-  try {
-    const result = await fetchJson<ApiResponse<Category[]>>('/categories?active=true')
-    return result?.success ? result.data : []
-  } catch (error) {
-    console.error('Failed to load public categories', error)
-    return []
-  }
+  const result = await fetchJson<ApiResponse<Category[]>>('/categories?active=true')
+  return readResponseData(result, 'Public categories') ?? []
 }
 
 export async function getPublicAuthor(id: string) {
   if (!id) return null
 
-  try {
-    const result = await fetchJson<ApiResponse<PublicAuthor>>(`/public/authors/${encodeURIComponent(id)}`)
-    return result?.success ? result.data : null
-  } catch (error) {
-    console.error('Failed to load public author', error)
-    return null
-  }
+  const result = await fetchJson<ApiResponse<PublicAuthor>>(`/public/authors/${encodeURIComponent(id)}`)
+  return readResponseData(result, 'Public author')
 }
 
 export async function getPublicArticle(slug: string, options: { trackView?: boolean; revalidate?: number } = {}) {
